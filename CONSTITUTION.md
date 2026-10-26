@@ -14,12 +14,12 @@ _
 
 ### Members
 
-| Name | GitHub username | Preferred contact | Usual availability |
-|------|-----------------|-------------------|--------------------|
-|      |                 |                   |                    |
-|      |                 |                   |                    |
-|      |                 |                   |                    |
-|      |                 |                   |                    |
+| Name | GitHub username | Usual availability |
+|------|-----------------|--------------------|
+|      |                 |                    |
+|      |                 |                    |
+|      |                 |                    |
+|      |                 |                    |
 
 ### Scrum Master
 
