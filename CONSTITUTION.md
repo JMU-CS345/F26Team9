@@ -17,7 +17,7 @@ _
 | Name | GitHub username | Usual availability |
 |------|----------------|-------------------|
 | Matthew Creighton | mcrouton | Weekday nights |
-| Kevin Scafe |  | Weekdays |
+| Kevin Scafe | KevinScafe  | Weekdays |
 | Luke Bonnell | lukem570 | Weekday nights |
 | Jason Waddell | adefender3 | Weekdays except for tuesday|
 
@@ -100,7 +100,7 @@ _
 
 **Where the backlog lives:** Project Board on Github
 
-**Board columns:** To Do, Progress, Review, Done
+**Board columns:** Backlog, To Do, In Progress, Review, Done
 
 
 ## 3. Communication
@@ -325,10 +325,10 @@ _
 
 *(What steps do we follow when there is a disagreement or a problem with a teammate?)*
 
-1. *(e.g., talk to the person directly)*
-2. *(e.g., raise it at the retrospective)*
-3. *(e.g., Scrum Master mediates)*
-4. *(e.g., escalate to the instructor)*
+1. talk to the person directly
+2. raise it at the retrospective
+3. Scrum Master mediates
+4. escalate to the instructor
 
 ### Missed Commitments
 
@@ -351,6 +351,6 @@ _
 | GitHub name | Signature (type your name) | Date |
 |------|----------------------------|------|
 |adefender3|Jason Waddell|10/28/2026|
-|      |                            |      |
-|      |                            |      |
+|mcrouton|Matthew Creighton|10/28/2026|
+|KevinScafe|Kevin Scafe|10/28/2026|
 |      |                            |      |
