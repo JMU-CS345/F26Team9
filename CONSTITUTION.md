@@ -116,13 +116,13 @@ _
 
 ### Primary Channel
 
-**Channel:** *(Discord, Slack, GroupMe, ...)*
+**Channel:** Text
 
-**Expected response time:** *(e.g., within 12 hours on weekdays)*
+**Expected response time:** Within 6 hours
 
 ### What Goes Where
 
-*(What is discussed in the chat channel vs. in GitHub issues vs. in PR comments?)*
+Schedule changes + notices go in text, work division goes in github comments.
 
 _
 
