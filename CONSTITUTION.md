@@ -278,7 +278,7 @@ _
 
 _
 
-**Manual playtesting:** *(Who plays the build before each sprint review, and how are bugs reported?)*
+**Manual playtesting:** Anyone
 
 _
 
@@ -288,9 +288,9 @@ _
 
 **Where the game is deployed:** GitHub Pages, URL here
 
-**What triggers a deploy:** *(e.g., a release PR from `main` into `production`, opened by the Scrum Master after each sprint review)*
+**What triggers a deploy:** A release PR from `main` into `production`, opened by the Scrum Master after each sprint review
 
-**Who checks the deployed build, and when:** _
+**Who checks the deployed build, and when:** Everyone whenever a new build is deployed (whenever they can).
 
 ---
 
@@ -308,7 +308,7 @@ _
 
 _
 
-**Responsibility:** *(e.g., whoever submits AI-generated code must understand it and is accountable for it)*
+**Responsibility:** Whoever submits AI-generated code must understand it and is accountable for it
 
 _
 
@@ -357,7 +357,7 @@ _
 
 | GitHub name | Signature (type your name) | Date |
 |------|----------------------------|------|
-|      |                            |      |
+|adefender3|Jason Waddell|10/28/2026|
 |      |                            |      |
 |      |                            |      |
 |      |                            |      |
