@@ -160,9 +160,13 @@ _
 
 **Maximum size:** 150 lines
 
-**Description template:** *(e.g., What / Why / How to test / Screenshot)*
+**Description template:**
+- What changed?
+- Why was this change made?
+- How was it tested?
+- Screenshots (if UI changes are included)
 
-**Linking issues:** *(e.g., every PR includes `Closes #N`)*
+**Linking issues:** Every pull request must link its related issue using Closes #N or Fixes #N.
 
 _
 
