@@ -19,7 +19,7 @@ _
 | Matthew Creighton | mcrouton | Weekday nights |
 | Kevin Scafe |  |  |
 | Luke Bonnell | lukem570 |  |
-| Jason Waddell | adefender3 |  |
+| Jason Waddell | adefender3 | weekdays except for tuesday|
 
 <br>
 
