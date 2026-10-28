@@ -150,8 +150,8 @@ _
 
 **Examples:**
 
--
--
+- feature/15-implement-game-engine
+- fix/22-resolve-merge-conflicts
 
 ### Branch Protection on `main`
 
