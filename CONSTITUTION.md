@@ -100,7 +100,7 @@ _
 
 **Where the backlog lives:** Project Board on Github
 
-**Board columns:** To Do, Progress, Review, Done
+**Board columns:** Backlog, To Do, In Progress, Review, Done
 
 
 ## 3. Communication
