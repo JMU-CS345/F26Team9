@@ -210,16 +210,13 @@ _
 
 **Quotes:** double
 
-**Maximum line length: 100 characters
+**Maximum line length:** 100 characters
 
 **Tools:** checkstyle
 
 _
 
 ### Project Structure
-
-*(Where does each kind of file live?)*
-
 ```
 src/
   model/        (e.g., game logic, no p5 drawing calls)
@@ -230,25 +227,17 @@ spec/
 ```
 
 ### Architecture Rules
-
-*(e.g., game logic never calls p5 drawing functions directly, so it can be unit tested)*
-
 - Model classes must not depend on UI or view classes.
 - Controllers handle user input and coordinate communication between models and views.
 
 ### Comments and Documentation
-
-*(When are comments or JSDoc required?)*
-
 Javadoc is required for all public classes and public methods. Comments are required for complex logic, algorithms, and non-obvious design decisions.
 
 ### Assets
 
 **File naming:** All lowercase, use hyphens between words, no spaces
 
-**Licensing and attribution:** *(Where do we record the source and license of art, sound, and fonts we did not make?)*
-
-Record the source URL, creator, and license information in ASSETS.md at the root of the repository.
+**Licensing and attribution:** Record the source URL, creator, and license information in ASSETS.md at the root of the repository.
 
 ---
 
@@ -319,8 +308,6 @@ _
 _
 
 ### Fair Contribution
-
-*(What counts as contributing, and how is it tracked? e.g., PRs merged, reviews done, story points completed.)*
 Contributors should let other group members know when their task is completed.
 _
 
@@ -342,9 +329,7 @@ _
 ---
 
 ## 10. Sign-Off
-
-*By signing, each member agrees to follow this constitution.*
-
+By signing, each member agrees to follow this constitution.
 | GitHub name | Signature (type your name) | Date |
 |------|----------------------------|------|
 |adefender3|Jason Waddell|10/28/2026|
