@@ -325,10 +325,10 @@ _
 
 *(What steps do we follow when there is a disagreement or a problem with a teammate?)*
 
-1. *(e.g., talk to the person directly)*
-2. *(e.g., raise it at the retrospective)*
-3. *(e.g., Scrum Master mediates)*
-4. *(e.g., escalate to the instructor)*
+1. talk to the person directly
+2. raise it at the retrospective
+3. Scrum Master mediates
+4. escalate to the instructor
 
 ### Missed Commitments
 
