@@ -25,7 +25,7 @@ _
 
 ### Scrum Master
 
-**Sprint 1 Scrum Master:** _
+**Sprint 1 Scrum Master:** Kevin Scafe
 
 **Does the role rotate?** *(e.g., rotates each sprint in the order listed above; or one person for the whole project)*
 
