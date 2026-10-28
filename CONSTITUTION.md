@@ -15,7 +15,7 @@ _
 ### Members
 
 | Name | GitHub username | Usual availability |
-|------|-----------------|--------------------|
+|------|@mcrouton|--------------------|
 |Matthew Creighton|                 |                    |
 |Kevin Scafe|                 |                    |
 |Luke Bonnell|                 |                    |
