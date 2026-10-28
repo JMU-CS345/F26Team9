@@ -296,15 +296,15 @@ _
 
 ## 8. AI Tool Usage
 
-**Allowed tools:** _
+**Allowed tools:** ChatGPT, CoPiliot under honor code restrictions.
 
-**Allowed uses:** *(e.g., code generation, tests, documentation, review)*
+**Allowed uses:** Review, Tests
 
 _
 
-**Not allowed:** _
+**Not allowed:** Code Generation
 
-**Disclosure:** *(e.g., note AI assistance in the PR description)*
+**Disclosure:** GitHub Comments.
 
 _
 
