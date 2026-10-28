@@ -8,7 +8,7 @@
 
 ### Team Number - 9
 
-### Team Name - PassioGoers
+### Team Name - PassioGoers and ThonnyFans
 
 _
 
