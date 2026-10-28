@@ -17,9 +17,9 @@ _
 | Name | GitHub username | Usual availability |
 |------|----------------|-------------------|
 | Matthew Creighton | mcrouton | Weekday nights |
-| Kevin Scafe |  | Weekday nights |
+| Kevin Scafe |  | Weekdays |
 | Luke Bonnell | lukem570 | Weekday nights |
-| Jason Waddell | adefender3 | weekdays except for tuesday|
+| Jason Waddell | adefender3 | Weekdays except for tuesday|
 
 <br>
 
