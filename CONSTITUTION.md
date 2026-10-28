@@ -15,11 +15,13 @@ _
 ### Members
 
 | Name | GitHub username | Usual availability |
-|--------------------------|
-|Matthew Creighton|                 |                    |
-|Kevin Scafe|                 |                    |
-|Luke Bonnell|                 |                    |
-|Jason Waddell|                 |                    |
+|------|----------------|-------------------|
+| Matthew Creighton |  |  |
+| Kevin Scafe |  |  |
+| Luke Bonnell |  |  |
+| Jason Waddell |  |  |
+
+<br>
 
 ### Scrum Master
 
