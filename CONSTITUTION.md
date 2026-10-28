@@ -16,10 +16,10 @@ _
 
 | Name | GitHub username | Usual availability |
 |------|-----------------|--------------------|
-|      |                 |                    |
-|      |                 |                    |
-|      |                 |                    |
-|      |                 |                    |
+|Matthew Creighton|                 |                    |
+|Kevin Scafe|                 |                    |
+|Luke Bonnell|                 |                    |
+|Jason Waddell|                 |                    |
 
 ### Scrum Master
 
