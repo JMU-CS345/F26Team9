@@ -325,24 +325,18 @@ Contributors should let other group members know when their task is completed.
 _
 
 ### Conflict Resolution
-
-*(What steps do we follow when there is a disagreement or a problem with a teammate?)*
-
+Steps to follow:
 1. talk to the person directly
 2. raise it at the retrospective
 3. Scrum Master mediates
 4. escalate to the instructor
 
 ### Missed Commitments
-
-*(What happens when a member repeatedly misses commitments?)*
-Report to stakeholder.
+Repeatedly missed commitments may be reported to the stakeholder and instructor.
 _
 
 ### Amending This Constitution
-
-*(How can this document be changed? e.g., proposed by PR, approved by team vote at a retrospective.)*
-Changed when everyone agrees on change.
+This constitution may be changed only with unanimous agreement from all team members.
 _
 
 ---
