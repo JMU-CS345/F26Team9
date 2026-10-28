@@ -25,7 +25,7 @@ _
 
 ### Scrum Master
 
-**Sprint 1 Scrum Master:** Jason Waddell
+**Sprint 1 Scrum Master:** Kevin Scafe
 
 **Does the role rotate?** Rotates whenever current Scrum Master is overwhelmed.
 
@@ -37,7 +37,7 @@ Matthew Creighton
 
 ### Other Responsibilities
 
-Who is responsible for maintaining the project board / backlog in good order? Kevin Scafe
+Who is responsible for maintaining the project board / backlog in good order? Jason Waddell
 
 Who is responsible for deploying the main branch to production to update GitHub pages? Luke
 
