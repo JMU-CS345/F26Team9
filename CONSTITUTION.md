@@ -239,22 +239,22 @@ spec/
 
 *(e.g., game logic never calls p5 drawing functions directly, so it can be unit tested)*
 
--
--
+- Model classes must not depend on UI or view classes.
+- Controllers handle user input and coordinate communication between models and views.
 
 ### Comments and Documentation
 
 *(When are comments or JSDoc required?)*
 
-_
+Javadoc is required for all public classes and public methods. Comments are required for complex logic, algorithms, and non-obvious design decisions.
 
 ### Assets
 
-**File naming:** *(e.g., all lowercase, hyphens, no spaces)*
+**File naming:** All lowercase, use hyphens between words, no spaces
 
 **Licensing and attribution:** *(Where do we record the source and license of art, sound, and fonts we did not make?)*
 
-_
+Record the source URL, creator, and license information in ASSETS.md at the root of the repository.
 
 ---
 
@@ -262,15 +262,17 @@ _
 
 **Test framework:** Jasmine
 
-**Where tests live:** _
+**Where tests live:** spec/
 
 **What must have tests:** *(e.g., all model code; every bug fix gets a test that reproduces it; combat and puzzle rules)*
-
-_
+- All model classes and game logic.
+- New features must include corresponding tests.
+- Every bug fix must include a test that reproduces the original bug.
+- Core game rules, scoring logic, and data validation must be tested.
 
 **Coverage expectations:** 90+%
 
-**Continuous integration:** *(What does GitHub Actions run on each PR?)*
+**Continuous integration:** GitHub Actions runs all Jasmine tests, verifies that the project builds successfully, and checks code style on every pull request. Pull requests must pass all checks before being merged.
 
 _
 
