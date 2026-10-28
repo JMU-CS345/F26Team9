@@ -129,13 +129,13 @@ _
 ### Reporting Blockers or Falling Behind
 
 *(How and how early does a member tell the team they are stuck or behind?)*
-
+As soon as possible
 _
 
 ### Absences
 
 *(How much notice is required? How is the absent member's work covered?)*
-
+As soon as possible, absent work members should be assigned by the absent member.
 _
 
 ---
@@ -144,9 +144,9 @@ _
 
 ### Branch Naming
 
-**Format:** *(e.g., `type/issue-short-description`)*
+**Format:** `type/issue-short-description`
 
-**Allowed types:** *(e.g., `feature`, `fix`, `docs`, `refactor`, `test`, `chore`)*
+**Allowed types:** `feature`, `fix`, `docs`, `refactor`, `test`, `chore`
 
 **Examples:**
 
@@ -168,7 +168,7 @@ _
 
 ### Pull Requests
 
-**Maximum size:** *(e.g., aim for under 300 changed lines)*
+**Maximum size:** 150 lines
 
 **Description template:** *(e.g., What / Why / How to test / Screenshot)*
 
