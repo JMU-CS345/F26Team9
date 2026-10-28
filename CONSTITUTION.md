@@ -210,15 +210,15 @@ _
 
 ### Formatting
 
-**Indentation:** *(2 spaces, 4 spaces, tabs)*
+**Indentation:** 4 spaces
 
-**Semicolons:** *(always / never)*
+**Semicolons:** always
 
-**Quotes:** *(single / double)*
+**Quotes:** double
 
-**Maximum line length:** _
+**Maximum line length: 100 characters
 
-**Tools:** *(e.g., Prettier and ESLint, with config files committed to the repo)*
+**Tools:** checkstyle
 
 _
 
