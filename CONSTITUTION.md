@@ -202,11 +202,11 @@ _
 
 | Kind | Convention | Example |
 |------|------------|---------|
-| Variables and functions | | |
-| Classes | | |
-| Constants | | |
-| Files | | |
-| Test files | | |
+| Variables and functions | camelCase | `userName` |
+| Classes | PascalCase | `GameControls` |
+| Constants | UPPER_CASE | `MAX_HEALTH` |
+| Files | Match class name | `GameControls.java` |
+| Test files | Class name + Test | `GameControlsTest.java` |
 
 ### Formatting
 
