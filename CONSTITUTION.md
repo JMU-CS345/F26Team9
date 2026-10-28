@@ -267,7 +267,7 @@ Record the source URL, creator, and license information in ASSETS.md at the root
 
 _
 
-**Rule for failing CI:** *(e.g., nothing merges while CI is red)*
+**Rule for failing CI:** No pull request may be merged while any CI check is failing. The developer who introduced the failure is responsible for fixing it.
 
 _
 
