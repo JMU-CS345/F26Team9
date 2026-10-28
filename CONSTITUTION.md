@@ -319,13 +319,13 @@ _
 ### Expected Effort
 
 *(Hours per person per week.)*
-
+6 hrs per week.
 _
 
 ### Fair Contribution
 
 *(What counts as contributing, and how is it tracked? e.g., PRs merged, reviews done, story points completed.)*
-
+Contributors should let other group members know when their task is completed.
 _
 
 ### Conflict Resolution
@@ -340,13 +340,13 @@ _
 ### Missed Commitments
 
 *(What happens when a member repeatedly misses commitments?)*
-
+Report to stakeholder.
 _
 
 ### Amending This Constitution
 
 *(How can this document be changed? e.g., proposed by PR, approved by team vote at a retrospective.)*
-
+Changed when everyone agrees on change.
 _
 
 ---
