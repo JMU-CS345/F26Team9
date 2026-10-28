@@ -152,8 +152,7 @@ _
 - [ ] Same protection on `production`
 
 ### Commit Messages
-
-*(Format and style, e.g., imperative mood: "Add rune puzzle validation". Do we follow Conventional Commits?)*
+Use imperative mood and concise descriptions (e.g., Add rune puzzle validation, Fix player movement bug). Follow the Conventional Commits format:
 
 _
 
@@ -169,19 +168,19 @@ _
 
 ### Code Review
 
-**Review turnaround:** *(e.g., within 24 hours of being requested)*
+**Review turnaround:** Within 24 hours of a review request whenever possible. Team members should respond within 48 hours at the latest.
 
-**Who reviews what:** *(e.g., any teammate; or a rotating assignment)*
+**Who reviews what:** Any teammate may review a pull request, but a pull request must receive approval from at least one teammate other than the author before it can be merged.
 
 _
 
 ### Merging
 
-**Merge style:** *(merge commit, squash and merge, or rebase and merge)*
+**Merge style:** Squash and merge
 
-**Who merges:** *(the author after approval, or the reviewer)*
+**Who merges:** The pull request author may merge after receiving at least one approval and passing all CI checks.
 
-**After merge:** *(e.g., delete the branch)*
+**After merge:** Delete the feature branch and close any associated issues.
 
 _
 
@@ -255,7 +254,7 @@ Record the source URL, creator, and license information in ASSETS.md at the root
 
 **Where tests live:** spec/
 
-**What must have tests:** *(e.g., all model code; every bug fix gets a test that reproduces it; combat and puzzle rules)*
+**What must have tests:**
 - All model classes and game logic.
 - New features must include corresponding tests.
 - Every bug fix must include a test that reproduces the original bug.
