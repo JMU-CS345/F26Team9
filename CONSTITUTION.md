@@ -25,31 +25,25 @@ _
 
 ### Scrum Master
 
-**Sprint 1 Scrum Master:** Kevin Scafe
+**Sprint 1 Scrum Master:** Jason Waddell
 
-**Does the role rotate?** *(e.g., rotates each sprint in the order listed above; or one person for the whole project)*
+**Does the role rotate?** Rotates whenever current Scrum Master is overwhelmed.
 
 _
 
 ### Product Owner
 
-*Choose one team member who will interact with the instructor (stakeholder) to clarify and prioritize stories, and to collect new ones.*
-
-_
+Matthew Creighton
 
 ### Other Responsibilities
 
-Who is responsible for maintaining the project board / backlog in good order? *(Scrum Master?)*
+Who is responsible for maintaining the project board / backlog in good order? Kevin Scafe
 
-Who is responsible for deploying the main branch to production to update GitHub pages?
+Who is responsible for deploying the main branch to production to update GitHub pages? Luke
 
 ### Decision Making
 
-*(How do we decide things: consensus, majority vote, Scrum Master decides? What happens if we are deadlocked?)*
-
-_
-
----
+Consensus Vote
 
 ## 2. Scrum Process
 
@@ -96,21 +90,18 @@ _
 
 ### Estimation
 
-**Method:** *(story points, t-shirt sizes, hours)*
+**Method:** Story Points
 
-**Scale:** *(e.g., 1, 2, 3, 5, 8, 13)*
+**Scale:** Fibonacci (1, 2, 3, 5, 8, 13)
 
 _
 
 ### Backlog and Board
 
-**Where the backlog lives:** *(e.g., GitHub Projects board, link here)*
+**Where the backlog lives:** Project Board on Github
 
-**Board columns:** *(e.g., To Do → In Progress → In Review → Done)*
+**Board columns:** To Do, Progress, Review, Done
 
-_
-
----
 
 ## 3. Communication
 
