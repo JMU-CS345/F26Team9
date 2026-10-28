@@ -335,4 +335,4 @@ By signing, each member agrees to follow this constitution.
 |adefender3|Jason Waddell|10/28/2026|
 |mcrouton|Matthew Creighton|10/28/2026|
 |KevinScafe|Kevin Scafe|10/28/2026|
-|      |                            |      |
+|lukem570|Luke Bonnell|10/28/2026|
