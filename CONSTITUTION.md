@@ -271,7 +271,7 @@ _
 
 ## 7. Deployment
 
-**Where the game is deployed:** GitHub Pages, URL here
+**Where the game is deployed:** https://jmu-cs345.github.io/F26Team9/
 
 **What triggers a deploy:** A release PR from `main` into `production`, opened by the Scrum Master after each sprint review
 
