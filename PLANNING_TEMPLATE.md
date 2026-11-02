@@ -115,10 +115,10 @@ All of these points can be done individually reducing conflicts and the reasonab
 
 | Member | Stories owned | Points |
 |--------|---------------|--------|
-| Luke    | #1 Player icon that moves around the screen | 2 |
-| Jason   | #2 Dungeon room drawn as a grid of tiles, #3 Auto-generated levels | 4 |
-| Kevin   | #14 Play the whole game with only the keyboard | 2 |
-| Matthew | #22 8-bit style graphics | 2 |
+| Luke    | #1 Player icon that moves around the screen | 5 |
+| Jason   | #2 Dungeon room drawn as a grid of tiles, #3 Auto-generated levels | 5 + 8 = 13 |
+| Kevin   | #14 Play the whole game with only the keyboard | 5 |
+| Matthew | #22 8-bit style graphics | 5 |
 
 *If the work is not balanced, explain why:*
 
@@ -129,7 +129,7 @@ Jason owns two stories because #2 (tile grid) and #3 (level generation) are tigh
 ## 7. Stories Split or Deferred
 
 *Did you split any stories that were too large for one sprint, or move stories back to the backlog? List them and say why.*
-
+No
 _
 
 ---
@@ -140,7 +140,7 @@ _
 
 | Action item | How it shows up in this sprint |
 |-------------|--------------------------------|
-|             |                                |
+|    N/A         |                                |
 |             |                                |
 
 ---
@@ -148,16 +148,16 @@ _
 ## 9. Risks and Dependencies
 
 *What might stop the team from meeting the sprint goal? Which stories depend on others being finished first?*
-
+Unsureness of where to start. There are a lot of variables to the order of how things are tackled because it's our first sprint.
 _
 
 ---
 
 ## 10. Checklist
 
-- [ ] Sprint goal written
-- [ ] Every committed story meets the Definition of Ready
-- [ ] Every story has an owner
-- [ ] Board updated: committed stories in the sprint, tasks created
-- [ ] Commitment compared to velocity
-- [ ] Report committed to `scrum/planning/` via pull request
+- [X] Sprint goal written
+- [X] Every committed story meets the Definition of Ready
+- [X] Every story has an owner
+- [X] Board updated: committed stories in the sprint, tasks created
+- [X] Commitment compared to velocity
+- [X] Report committed to `scrum/planning/` via pull request
