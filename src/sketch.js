@@ -1,46 +1,31 @@
-import { Player } from "./player.js";
-import { Menu } from "./menu.js";
-import { Inventory } from "./inventory.js";
-import { InventoryMenu } from "./inventoryMenu.js";
-import { DeveloperMenu } from "./developerMenu.js";
-
-// Objects used throughout the game.
-let player;
-let menu;
-let developerMenu;
-let inventory;
-let inventoryMenu;
-let playerSpriteSheet;
-let hotkeyMessage = "";
-let hotkeyMessageFrames = 0;
-
-// The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
-const SPRITE_SIZE = 64;
-
-const PLAYER_DIRECTIONS = [
-    "south", "southeast", "east", "northeast",
-    "north", "northwest", "west", "southwest"
-];
-
-/** Loads character artwork before setup(). */
-function preload() {
-    playerSpriteSheet = loadImage("src/assets/player/mage-walk-8dir.png");
+function setup() {
+  createCanvas(400, 400);
 }
 
-/**
- * Cuts two animation frames per facing direction out of the PNG.
- * @param {p5.Image} sheet - Loaded character sprite sheet.
- * @returns {Object} Direction-to-animation-frame mapping.
- */
-export function createPlayerSprites(sheet) {
-    const sprites = {};
-    for (let column = 0; column < PLAYER_DIRECTIONS.length; column++) {
-        sprites[PLAYER_DIRECTIONS[column]] = [
-            sheet.get(column * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE),
-            sheet.get(column * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE)
-        ];
-    }
-    return sprites;
+class TileGrid {
+	constructor(cols, rows, tileSize, tileColors = []) {
+		this.cols = cols;
+		this.rows = rows;
+		this.tileSize = tileSize;
+		this.tileColors = tileColors;
+	}
+
+	draw() {
+		stroke(100);
+		strokeWeight(1);
+		for (let row = 0; row < this.rows; row++) {
+			for (let col = 0; col < this.cols; col++) {
+				fill(this.tileColors[row]?.[col] ?? 230);
+				rect(col * this.tileSize, row * this.tileSize, this.tileSize, this.tileSize);
+			}
+		}
+	}
+}
+
+function draw() {
+  background(220);
+  let tileGrid = new TileGrid(20, 13, 30, [red]);
+  tileGrid.draw();
 }
 
 /** Initializes the canvas, player, all menus, and saved settings. */
