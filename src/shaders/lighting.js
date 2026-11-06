@@ -4,7 +4,7 @@
  */
 
 // Upper limit on lights per frame. GLSL ES 1.0 needs a constant loop bound.
-export const MAX_LIGHTS = 16;
+export const MAX_LIGHTS = 32;
 
 /**
  * Vertex shader: stretches p5's unit rect over the whole layer and passes
@@ -37,7 +37,8 @@ varying vec2 vTexCoord;
 
 uniform vec2 uResolution;
 uniform float uTime;
-uniform float uAmbient;
+uniform vec3 uAmbient;   // color where no light reaches
+uniform vec3 uLightTint; // multiplied into every light
 uniform int uPass;
 uniform int uLightCount;
 uniform vec3 uLights[MAX_LIGHTS];      // x, y, radius in canvas pixels
@@ -47,6 +48,14 @@ float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
+// Dithering: smooth light falloffs only have 256 steps per channel, which shows as
+// rings (banding). Nudging each pixel by up to half a step in a fine, even noise
+// pattern (interleaved gradient noise) hides the rings without visible grain.
+vec3 dither(vec3 color) {
+    float noise = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    return color + (noise - 0.5) / 255.0;
+}
+
 // Sum of every light's color at a canvas position, with a smooth falloff to its radius.
 vec3 lightAt(vec2 pos) {
     vec3 total = vec3(0.0);
@@ -54,7 +63,7 @@ vec3 lightAt(vec2 pos) {
         if (i >= uLightCount) break;
         float d = distance(pos, uLights[i].xy);
         float falloff = clamp(1.0 - d / uLights[i].z, 0.0, 1.0);
-        total += uLightColors[i] * falloff * falloff;
+        total += uLightColors[i] * uLightTint * falloff * falloff;
     }
     return total;
 }
@@ -92,13 +101,14 @@ void main() {
     vec3 light = lightAt(pos);
 
     if (uPass == 0) {
-        gl_FragColor = vec4(clamp(vec3(uAmbient) + light, 0.0, 1.0), 1.0);
+        gl_FragColor = vec4(dither(clamp(uAmbient + light, 0.0, 1.0)), 1.0);
     } else {
         // Motes are faint in the dark and bright near a light.
-        float brightness = clamp(uAmbient + max(light.r, max(light.g, light.b)), 0.0, 1.0);
+        vec3 lit = uAmbient + light;
+        float brightness = clamp(max(lit.r, max(lit.g, lit.b)), 0.0, 1.0);
         vec3 moteColor = vec3(1.0, 0.9, 0.65) * motes(pos) * (0.2 + 0.8 * brightness);
         vec3 glow = light * 0.12;
-        gl_FragColor = vec4(moteColor + glow, 1.0);
+        gl_FragColor = vec4(dither(moteColor + glow), 1.0);
     }
 }
 `;

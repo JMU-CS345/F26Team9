@@ -9,10 +9,12 @@ export class LightingRenderer {
      * Creates the WEBGL layer and compiles the shader.
      * @param {number} w - Width of the canvas in pixels.
      * @param {number} h - Height of the canvas in pixels.
-     * @param {number} ambient - Brightness where no light reaches, from 0 to 1.
+     * @param {number[]} ambient - Color where no light reaches, [r, g, b] from 0 to 1.
+     * @param {number[]} lightTint - Color every light is multiplied by; warm by default.
      */
-    constructor(w, h, ambient = 0.3) {
+    constructor(w, h, ambient = [0.12, 0.09, 0.07], lightTint = [1.0, 0.82, 0.6]) {
         this.ambient = ambient;
+        this.lightTint = lightTint;
         this.layer = createGraphics(w, h, WEBGL);
 
         // Lighting is smooth, so full retina resolution is not worth the cost.
@@ -43,6 +45,7 @@ export class LightingRenderer {
         this.shader.setUniform("uResolution", [this.layer.width, this.layer.height]);
         this.shader.setUniform("uTime", time);
         this.shader.setUniform("uAmbient", this.ambient);
+        this.shader.setUniform("uLightTint", this.lightTint);
         this.shader.setUniform("uLightCount", packed.count);
         this.shader.setUniform("uLights", packed.positions);
         this.shader.setUniform("uLightColors", packed.colors);
