@@ -1,5 +1,41 @@
 function setup() {
   createCanvas(400, 400);
+  const tileSize = 30;
+  tileGrid = new TileGrid(Math.ceil(width / tileSize), Math.ceil(height / tileSize), tileSize);
+}
+
+class Tile {
+	constructor(x, y, size, color = 230) {
+		this.x = x;
+		this.y = y;
+		this.size = size;
+		this.color = color;
+		this.image = null;
+	}
+
+	loadImage(path) {
+		loadImage(path, (loadedImage) => {
+			this.image = loadedImage;
+		});
+	}
+
+	setImage(image) {
+		this.image = image;
+	}
+
+	draw() {
+		if (this.image) {
+			image(this.image, this.x, this.y, this.size, this.size);
+		} else {
+			fill(this.color);
+			rect(this.x, this.y, this.size, this.size);
+		}
+
+		noFill();
+		stroke(100);
+		strokeWeight(1);
+		rect(this.x, this.y, this.size, this.size);
+	}
 }
 
 class TileGrid {
@@ -7,24 +43,25 @@ class TileGrid {
 		this.cols = cols;
 		this.rows = rows;
 		this.tileSize = tileSize;
-		this.tileColors = tileColors;
+		this.tiles = Array.from({ length: rows }, (_, row) =>
+			Array.from({ length: cols }, (_, col) =>
+				new Tile(col * tileSize, row * tileSize, tileSize, tileColors[row]?.[col] ?? 230)
+			)
+		);
 	}
 
 	draw() {
-		stroke(100);
-		strokeWeight(1);
 		for (let row = 0; row < this.rows; row++) {
 			for (let col = 0; col < this.cols; col++) {
-				fill(this.tileColors[row]?.[col] ?? 230);
-				rect(col * this.tileSize, row * this.tileSize, this.tileSize, this.tileSize);
+				this.tiles[row][col].draw();
 			}
 		}
 	}
 }
 
+let tileGrid;
+
 function draw() {
   background(220);
-  const tileSize = 30;
-  let tileGrid = new TileGrid(Math.ceil(width / tileSize), Math.ceil(height / tileSize), tileSize);
   tileGrid.draw();
 }
