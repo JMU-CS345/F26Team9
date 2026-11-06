@@ -38,10 +38,11 @@ function createPlayerSprites(sheet) {
 
 /** Initializes the canvas, player, all menus, and saved settings. */
 function setup() {
-    createCanvas(800, 600);
+    // Fill the browser window; windowResized() keeps it in sync.
+    createCanvas(windowWidth, windowHeight);
     noSmooth();
 
-    player = new Player(400, 300, createPlayerSprites(playerSpriteSheet));
+    player = new Player(width / 2, height / 2, createPlayerSprites(playerSpriteSheet));
     menu = new Menu();
     inventory = new Inventory();
     developerMenu = new DeveloperMenu(player, menu, localStorage, inventory);
@@ -180,4 +181,12 @@ function keyPressed(event) {
         }
         return false;
     }
+}
+
+/**
+ * Resizes the canvas to match the browser window.
+ * Called automatically whenever the window is resized.
+ */
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }
