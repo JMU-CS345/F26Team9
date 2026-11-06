@@ -1,46 +1,69 @@
-import { Player } from "./player.js";
-import { Menu } from "./menu.js";
-import { Inventory } from "./inventory.js";
-import { InventoryMenu } from "./inventoryMenu.js";
-import { DeveloperMenu } from "./developerMenu.js";
-
-// Objects used throughout the game.
-let player;
-let menu;
-let developerMenu;
-let inventory;
-let inventoryMenu;
-let playerSpriteSheet;
-let hotkeyMessage = "";
-let hotkeyMessageFrames = 0;
-
-// The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
-const SPRITE_SIZE = 64;
-
-const PLAYER_DIRECTIONS = [
-    "south", "southeast", "east", "northeast",
-    "north", "northwest", "west", "southwest"
-];
-
-/** Loads character artwork before setup(). */
-function preload() {
-    playerSpriteSheet = loadImage("src/assets/player/mage-walk-8dir.png");
+function setup() {
+  createCanvas(400, 400);
+  const tileSize = 30;
+  tileGrid = new TileGrid(Math.ceil(width / tileSize), Math.ceil(height / tileSize), tileSize);
 }
 
-/**
- * Cuts two animation frames per facing direction out of the PNG.
- * @param {p5.Image} sheet - Loaded character sprite sheet.
- * @returns {Object} Direction-to-animation-frame mapping.
- */
-export function createPlayerSprites(sheet) {
-    const sprites = {};
-    for (let column = 0; column < PLAYER_DIRECTIONS.length; column++) {
-        sprites[PLAYER_DIRECTIONS[column]] = [
-            sheet.get(column * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE),
-            sheet.get(column * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE)
-        ];
-    }
-    return sprites;
+class Tile {
+	constructor(x, y, size, color = 230) {
+		this.x = x;
+		this.y = y;
+		this.size = size;
+		this.color = color;
+		this.image = null;
+	}
+
+	loadImage(path) {
+		loadImage(path, (loadedImage) => {
+			this.image = loadedImage;
+		});
+	}
+
+	setImage(image) {
+		this.image = image;
+	}
+
+	draw() {
+		if (this.image) {
+			image(this.image, this.x, this.y, this.size, this.size);
+		} else {
+			fill(this.color);
+			rect(this.x, this.y, this.size, this.size);
+		}
+
+		noFill();
+		stroke(100);
+		strokeWeight(1);
+		rect(this.x, this.y, this.size, this.size);
+	}
+}
+
+class TileGrid {
+	constructor(cols, rows, tileSize, tileColors = []) {
+		this.cols = cols;
+		this.rows = rows;
+		this.tileSize = tileSize;
+		this.tiles = Array.from({ length: rows }, (_, row) =>
+			Array.from({ length: cols }, (_, col) =>
+				new Tile(col * tileSize, row * tileSize, tileSize, tileColors[row]?.[col] ?? 230)
+			)
+		);
+	}
+
+	draw() {
+		for (let row = 0; row < this.rows; row++) {
+			for (let col = 0; col < this.cols; col++) {
+				this.tiles[row][col].draw();
+			}
+		}
+	}
+}
+
+let tileGrid;
+
+function draw() {
+  background(220);
+  tileGrid.draw();
 }
 
 /** Initializes the canvas, player, all menus, and saved settings. */
