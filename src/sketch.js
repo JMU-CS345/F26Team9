@@ -3,6 +3,7 @@ import { Menu } from "./menu.js";
 import { Inventory } from "./inventory.js";
 import { InventoryMenu } from "./inventoryMenu.js";
 import { DeveloperMenu } from "./developerMenu.js";
+import { LightingRenderer } from "./lightingRenderer.js";
 
 // Objects used throughout the game.
 let player;
@@ -11,11 +12,16 @@ let developerMenu;
 let inventory;
 let inventoryMenu;
 let playerSpriteSheet;
+let lighting;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
 
 // The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
 const SPRITE_SIZE = 64;
+
+// Warm light carried by the player.
+const PLAYER_LIGHT_RADIUS = 260;
+const PLAYER_LIGHT_COLOR = [1.0, 0.82, 0.55];
 
 const PLAYER_DIRECTIONS = [
     "south", "southeast", "east", "northeast",
@@ -54,6 +60,7 @@ function setup() {
     inventory = new Inventory();
     developerMenu = new DeveloperMenu(player, menu, localStorage, inventory);
     inventoryMenu = new InventoryMenu(inventory, menu);
+    lighting = new LightingRenderer(width, height);
 }
 
 /** Draws the four assigned hotkeys during gameplay. */
@@ -104,6 +111,8 @@ function draw() {
     }
     player.display();
 
+    lighting.display(getLights(), millis() / 1000);
+
     push();
     fill(0);
     noStroke();
@@ -131,6 +140,21 @@ function draw() {
     developerMenu.display();
     inventoryMenu.display();
     menu.displayBrightness();
+}
+
+/**
+ * Lists the lights for the current frame. Add torches or spell lights here.
+ * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]}.
+ */
+function getLights() {
+    // Perlin noise gives a gentle, uneven flicker like a flame.
+    const flicker = 1 + 0.1 * (noise(millis() * 0.002) - 0.5);
+    return [{
+        x: player.x + player.size / 2,
+        y: player.y + player.size / 2,
+        radius: PLAYER_LIGHT_RADIUS * flicker,
+        color: PLAYER_LIGHT_COLOR
+    }];
 }
 
 /**
@@ -196,6 +220,7 @@ function keyPressed(event) {
  */
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+    lighting.resize(width, height);
 }
 
 // p5.js global mode finds these callbacks on window. Functions in a module are
