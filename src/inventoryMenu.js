@@ -2,7 +2,7 @@
  * E-key inventory screen: four hotkeys across the top and four inventory slots
  * per page below. WASD navigates; Space picks, cancels or assigns an item.
  */
-class InventoryMenu {
+export class InventoryMenu {
     /**
      * @param {Inventory} inventory - The player's owned items and hotkeys.
      * @param {Menu} menu - Main settings menu (for matching font-size setting).

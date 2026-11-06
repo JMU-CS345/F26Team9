@@ -1,3 +1,8 @@
+import { Player } from "../src/player.js";
+import { ITEM_CATALOG, Inventory } from "../src/inventory.js";
+import { InventoryMenu } from "../src/inventoryMenu.js";
+import { DeveloperMenu } from "../src/developerMenu.js";
+
 /** Jasmine unit tests for E-key inventory and developer item counts. */
 describe("Inventory item counts and hotkeys", function () {
     function storage() {

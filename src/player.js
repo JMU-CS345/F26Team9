@@ -1,8 +1,10 @@
+import { Entity } from "./entity.js";
+
 /**
  * Represents the player-controlled character in MageQuest.
  * Uses Entity's shared movement, facing, and animation methods.
  */
-class Player extends Entity {
+export class Player extends Entity {
     /**
      * Creates a player at the given position.
      * @param {number} x - Starting x-coordinate.

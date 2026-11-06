@@ -2,7 +2,7 @@
  * Items that can be placed on H/J/K/L. These are prototypes: gameplay effects
  * (damage, healing, mana, cooldowns) are not implemented yet.
  */
-const ITEM_CATALOG = [
+export const ITEM_CATALOG = [
     { id: "healing_potion", name: "Healing Potion", shortName: "Heal", type: "potion", symbol: "+", color: [205, 72, 89] },
     { id: "mana_potion", name: "Mana Potion", shortName: "Mana", type: "potion", symbol: "M", color: [70, 115, 230] },
     { id: "speed_potion", name: "Speed Potion", shortName: "Speed", type: "potion", symbol: ">", color: [230, 167, 58] },
@@ -14,7 +14,7 @@ const ITEM_CATALOG = [
 ];
 
 /** Stores owned items and assignments independently of p5 drawing code. */
-class Inventory {
+export class Inventory {
     /**
      * @param {Storage} storage - Browser storage or test substitute.
      */
