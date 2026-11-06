@@ -24,6 +24,7 @@ class TileGrid {
 
 function draw() {
   background(220);
-  let tileGrid = new TileGrid(20, 13, 30, [red]);
+  const tileSize = 30;
+  let tileGrid = new TileGrid(Math.ceil(width / tileSize), Math.ceil(height / tileSize), tileSize);
   tileGrid.draw();
 }
