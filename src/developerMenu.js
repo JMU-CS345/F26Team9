@@ -1,8 +1,10 @@
+import { ITEM_CATALOG } from "./inventory.js";
+
 /**
  * Developer-only menu for tuning how the player feels during gameplay.
  * W/S selects a property, A/D changes it, and P opens/closes the menu.
  */
-class DeveloperMenu {
+export class DeveloperMenu {
     /**
      * @param {Player} player - Player whose movement settings are adjusted.
      * @param {Menu} menu - Normal menu, used to match its text size.

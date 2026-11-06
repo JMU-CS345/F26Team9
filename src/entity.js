@@ -2,7 +2,7 @@
  * Represents an entity in MageQuest.
  * Shares movement, eight-direction facing, animation, and drawing behavior.
  */
-class Entity {
+export class Entity {
     /**
      * Creates an entity.
      * @param {number} x - Starting x-coordinate.

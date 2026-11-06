@@ -2,7 +2,7 @@
  * Represents the settings menu in MageQuest.
  * Handles navigation, text size, sound, brightness, and saving settings.
  */
-class Menu {
+export class Menu {
     /**
      * Creates a new settings menu and loads saved settings.
      */

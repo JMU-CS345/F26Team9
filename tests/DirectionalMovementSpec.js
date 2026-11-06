@@ -1,3 +1,8 @@
+import { Entity } from "../src/entity.js";
+import { Player } from "../src/player.js";
+import { DeveloperMenu } from "../src/developerMenu.js";
+import { createPlayerSprites } from "../src/sketch.js";
+
 /**
  * Jasmine tests for MageQuest's shared movement and facing logic.
  * These do not require a p5.js canvas or character artwork.

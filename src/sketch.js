@@ -1,3 +1,9 @@
+import { Player } from "./player.js";
+import { Menu } from "./menu.js";
+import { Inventory } from "./inventory.js";
+import { InventoryMenu } from "./inventoryMenu.js";
+import { DeveloperMenu } from "./developerMenu.js";
+
 // Objects used throughout the game.
 let player;
 let menu;
@@ -10,6 +16,7 @@ let hotkeyMessageFrames = 0;
 
 // The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
 const SPRITE_SIZE = 64;
+
 const PLAYER_DIRECTIONS = [
     "south", "southeast", "east", "northeast",
     "north", "northwest", "west", "southwest"
@@ -17,7 +24,7 @@ const PLAYER_DIRECTIONS = [
 
 /** Loads character artwork before setup(). */
 function preload() {
-    playerSpriteSheet = loadImage("assets/player/mage-walk-8dir.png");
+    playerSpriteSheet = loadImage("src/assets/player/mage-walk-8dir.png");
 }
 
 /**
@@ -25,7 +32,7 @@ function preload() {
  * @param {p5.Image} sheet - Loaded character sprite sheet.
  * @returns {Object} Direction-to-animation-frame mapping.
  */
-function createPlayerSprites(sheet) {
+export function createPlayerSprites(sheet) {
     const sprites = {};
     for (let column = 0; column < PLAYER_DIRECTIONS.length; column++) {
         sprites[PLAYER_DIRECTIONS[column]] = [
@@ -190,3 +197,7 @@ function keyPressed(event) {
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
 }
+
+// p5.js global mode finds these callbacks on window. Functions in a module are
+// not global, so expose them explicitly.
+Object.assign(window, { preload, setup, draw, keyPressed, windowResized });
