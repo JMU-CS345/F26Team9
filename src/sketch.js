@@ -3,6 +3,10 @@ import { Menu } from "./menu.js";
 import { Inventory } from "./inventory.js";
 import { InventoryMenu } from "./inventoryMenu.js";
 import { DeveloperMenu } from "./developerMenu.js";
+import { LightingRenderer } from "./lightingRenderer.js";
+import { SpellCaster } from "./spellCaster.js";
+import { SpriteSheet } from "./spellEffects.js";
+import { LightOrb } from "./lightOrb.js";
 
 // Objects used throughout the game.
 let player;
@@ -11,6 +15,10 @@ let developerMenu;
 let inventory;
 let inventoryMenu;
 let playerSpriteSheet;
+let lighting;
+let spellImages;
+let spellCaster;
+let lightOrb;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
 
@@ -25,6 +33,11 @@ const PLAYER_DIRECTIONS = [
 /** Loads character artwork before setup(). */
 function preload() {
     playerSpriteSheet = loadImage("src/assets/player/mage-walk-8dir.png");
+    spellImages = {
+        fireball: loadImage("src/assets/player/fireball.png"),
+        iceball: loadImage("src/assets/player/fireball_blue.png"),
+        sparkle: loadImage("src/assets/player/flash01.png")
+    };
 }
 
 /**
@@ -50,10 +63,17 @@ function setup() {
     noSmooth();
 
     player = new Player(width / 2, height / 2, createPlayerSprites(playerSpriteSheet));
+    lightOrb = new LightOrb(player.x, player.y);
     menu = new Menu();
     inventory = new Inventory();
     developerMenu = new DeveloperMenu(player, menu, localStorage, inventory);
     inventoryMenu = new InventoryMenu(inventory, menu);
+    lighting = new LightingRenderer(width, height);
+    spellCaster = new SpellCaster({
+        fireball: new SpriteSheet(spellImages.fireball, 4, 10),
+        iceball: new SpriteSheet(spellImages.iceball, 4, 10),
+        sparkle: new SpriteSheet(spellImages.sparkle, 5, 2)
+    });
 }
 
 /** Draws the four assigned hotkeys during gameplay. */
@@ -99,13 +119,25 @@ function draw() {
     const paused = menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
     if (!paused) {
         player.handleInput(width, height);
+
+        // Same 60 FPS frame units the player uses, so spells keep pace with movement.
+        const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
+        spellCaster.update(frameScale, width, height);
+        lightOrb.update(player, frameScale);
     } else {
         player.stop();
     }
     player.display();
 
+    lighting.display(getLights(), millis() / 1000);
+
+    // Spells and the orb glow, so draw them after lighting where darkness cannot dim them.
+    spellCaster.display();
+    lightOrb.display();
+
+    // Light text so the HUD stays readable over the dark ambient lighting.
     push();
-    fill(0);
+    fill(235);
     noStroke();
     textAlign(LEFT, TOP);
     textSize(menu.getTextSize());
@@ -117,7 +149,7 @@ function draw() {
     drawHotbar();
     if (hotkeyMessageFrames > 0) {
         push();
-        fill(25);
+        fill(235);
         noStroke();
         textAlign(CENTER, CENTER);
         textSize(14);
@@ -131,6 +163,14 @@ function draw() {
     developerMenu.display();
     inventoryMenu.display();
     menu.displayBrightness();
+}
+
+/**
+ * Lists the lights for the current frame: the light orb plus every active spell.
+ * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]}.
+ */
+function getLights() {
+    return [...lightOrb.getLights(), ...spellCaster.getLights()];
 }
 
 /**
@@ -181,6 +221,13 @@ function keyPressed(event) {
     if (inventory.keys.includes(pressedKey)) {
         if (!event || !event.repeat) {
             const item = inventory.getAssigned(pressedKey);
+            if (item && spellCaster.knows(item.id)) {
+                if (!spellCaster.cast(item.id, player)) {
+                    hotkeyMessage = item.name + " is recharging";
+                    hotkeyMessageFrames = 40;
+                }
+                return false;
+            }
             hotkeyMessage = item
                 ? pressedKey.toUpperCase() + ": " + item.name + " (effect coming later)"
                 : pressedKey.toUpperCase() + ": No item assigned (press E)";
@@ -196,6 +243,7 @@ function keyPressed(event) {
  */
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+    lighting.resize(width, height);
 }
 
 // p5.js global mode finds these callbacks on window. Functions in a module are
