@@ -1,22 +1,32 @@
-
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>MageQuest</title>
 
     <!-- Load the p5.js library. -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.11/p5.min.js"></script>
 
-    <!-- Load the parent Entity class first. -->
+    <!-- Load the parent entity class first. -->
     <script src="entity.js"></script>
 
-    <!-- Load the Player class, which extends Entity. -->
+    <!-- Load the player class, which extends Entity. -->
     <script src="player.js"></script>
 
-    <!-- Load the main game code. -->
+    <!-- Load the settings menu class. -->
+    <script src="menu.js"></script>
+
+    <!-- Load item data and the E-key assignment menu. -->
+    <script src="inventory.js"></script>
+    <script src="inventoryMenu.js"></script>
+
+    <!-- Load the developer tuning menu after item data and regular Menu. -->
+    <script src="developerMenu.js"></script>
+
+    <!-- Load the main game code last. -->
     <script src="sketch.js"></script>
 </head>
 <body>
-    <!-- p5.js creates the canvas automatically. -->
+    <!-- The game canvas is created automatically by p5.js. -->
 </body>
 </html>

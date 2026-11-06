@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MageQuest Directional Movement Tests</title>
+    <!-- Jasmine 5.1.0 browser runner. -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/jasmine/5.1.0/jasmine.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/5.1.0/jasmine.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/5.1.0/jasmine-html.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/5.1.0/boot0.js"></script>
+
+    <!-- Test only the movement classes, not the game canvas. -->
+    <script src="../entity.js"></script>
+    <script src="../player.js"></script>
+    <!-- Load the inventory and keyboard assignment logic. -->
+    <script src="../inventory.js"></script>
+    <script src="../inventoryMenu.js"></script>
+    <!-- Test the developer settings without creating a canvas. -->
+    <script src="../developerMenu.js"></script>
+    <!-- Sprite slicing logic, without running the game loop. -->
+    <script src="../sketch.js"></script>
+
+    <script src="DirectionalMovementSpec.js"></script>
+    <script src="InventorySpec.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jasmine/5.1.0/boot1.js"></script>
+</head>
+<body></body>
+</html>
