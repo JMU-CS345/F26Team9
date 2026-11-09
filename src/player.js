@@ -9,12 +9,10 @@ export class Player extends Entity {
      * Creates a player at the given position.
      * @param {number} x - Starting x-coordinate.
      * @param {number} y - Starting y-coordinate.
-     * @param {Object} sprites - Optional directional walking frames.
-     * @param {Object} idleSprites - Optional directional idle frames.
+     * @param {Object} sprites - Optional directional sprite frames.
      */
-    constructor(x, y, sprites = {}, idleSprites = {}) {
+    constructor(x, y, sprites = {}) {
         super(x, y, 32, 3, sprites);
-        this.idleSprites = idleSprites;
         this.placeholderColor = [100, 50, 200];
     }
 
