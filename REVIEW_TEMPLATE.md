@@ -6,17 +6,17 @@
 
 ## 1. Meeting Details
 
-**Date:** _
+**Date:** 11/9/2026
 
-**Scrum Master:** _
+**Scrum Master:** Luke B
 
-**Attendees:** _
+**Attendees:** Luke, Jason, Matthew
 
-**Absent:** _
+**Absent:** Kevin
 
-**Presenter:** *(one member gives the whole demo)*
+**Presenter:** Jason W
 
-**Deployed build reviewed:** *(GitHub Pages URL)*
+**Deployed build reviewed:** jmu-cs345.github.io/F26Team9/
 
 **Release PR into `production`:** *(link; merge it before the review begins)*
 
@@ -26,10 +26,10 @@
 
 *Tell the stakeholder whether the sprint delivered what it set out to.*
 
-**The goal we set:** _
+**The goal we set:** Create a good baseline for the game by creating good graphical design and player movement.
 
-**Did we meet it?** *(Yes / Partly / No, and one sentence explaining why)*
-
+**Did we meet it?** *(Partly), and one sentence explaining why)*
+The goal was mostly met, but we feel we failed in the world gen, which would've set a better baseline for the game.
 _
 
 ---
