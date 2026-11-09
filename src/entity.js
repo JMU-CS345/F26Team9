@@ -31,11 +31,6 @@ export class Entity {
         this.walkFrame = 0;
         this.animationTick = 0;
         this.animationDelay = 8; // Switch poses after eight movement updates.
-        this.isWalking = false;
-        this.idleSprites = {}; // Separate directional frames for standing still.
-        this.idleFrame = 0;
-        this.idleTick = 0;
-        this.idleAnimationDelay = 18;
 
         // Default appearance when there is no directional artwork.
         this.placeholderColor = [150, 150, 150];
@@ -62,50 +57,26 @@ export class Entity {
     }
 
     /**
-     * Updates walking or idle frames while retaining the last facing direction.
-     * Entities without idle sprites keep their original walking behavior.
-     * @param {boolean} moved - Whether the entity changed position.
-     * @param {number} frameScale - Time measured in 60 FPS frames.
-     * @param {boolean} walking - Whether walking artwork should be displayed.
+     * Updates the two-frame walking cycle.
+     * Resets to standing when there was no actual movement.
+     *
+     * @param {boolean} moved - Whether position changed this update.
+     * @param {number} frameScale - Elapsed time measured in 60 FPS frames.
      */
-    updateAnimation(moved, frameScale = 1, walking = moved) {
-        const wasWalking = this.isWalking;
+    updateAnimation(moved, frameScale = 1) {
         this.isMoving = moved;
-        this.isWalking = walking;
 
-        if (!walking) {
+        if (!moved) {
             this.walkFrame = 0;
             this.animationTick = 0;
-            if (wasWalking) {
-                this.idleFrame = 0;
-                this.idleTick = 0;
-            }
-            this.idleTick += frameScale;
-            if (this.idleTick >= this.idleAnimationDelay) {
-                this.idleTick %= this.idleAnimationDelay;
-                const frames = this.idleSprites[this.direction];
-                if (Array.isArray(frames) && frames.length > 0) {
-                    this.idleFrame = (this.idleFrame + 1) % frames.length;
-                }
-            }
             return;
         }
 
-        // Show the first walking pose as soon as a character leaves its idle.
-        // The normal eight-frame timing is preserved for entities without idle art.
-        const idleFrames = this.idleSprites[this.direction];
-        if (!wasWalking && Array.isArray(idleFrames) && idleFrames.length > 0) {
-            this.walkFrame = 1;
-            this.animationTick = 0;
-        } else {
-            this.animationTick += frameScale;
-            if (this.animationTick >= this.animationDelay) {
-                this.animationTick -= this.animationDelay;
-                this.walkFrame = 1 - this.walkFrame;
-            }
+        this.animationTick += frameScale;
+        if (this.animationTick >= this.animationDelay) {
+            this.animationTick -= this.animationDelay;
+            this.walkFrame = 1 - this.walkFrame;
         }
-        this.idleFrame = 0;
-        this.idleTick = 0;
     }
 
     /**
@@ -203,11 +174,7 @@ export class Entity {
             this.updateDirection(dx, dy);
         }
 
-        // Display the idle animation at the end of a barely perceptible glide.
-        const idleFrames = this.idleSprites[this.direction];
-        const hasIdle = Array.isArray(idleFrames) && idleFrames.length > 0;
-        const walking = moved && (!hasIdle || length > 0 || Math.hypot(this.vx, this.vy) > 0.45);
-        this.updateAnimation(moved, frameScale, walking);
+        this.updateAnimation(moved, frameScale);
     }
 
     /**
@@ -217,23 +184,16 @@ export class Entity {
     stop() {
         this.vx = 0;
         this.vy = 0;
-        // Freeze the idle pose as well while a menu is open.
-        this.updateAnimation(false, 0);
+        this.updateAnimation(false);
     }
 
     /**
-     * Returns idle artwork when stopped, or walking artwork when moving.
-     * Entities without idle artwork still use their original standing frame.
+     * Returns the image for the current direction and walking frame.
+     * Entities with only one image per direction also work.
      *
      * @returns {Object|undefined} Current sprite image, if available.
      */
     getCurrentSprite() {
-        if (!this.isWalking) {
-            const idleFrames = this.idleSprites[this.direction];
-            if (Array.isArray(idleFrames) && idleFrames.length > 0) {
-                return idleFrames[this.idleFrame % idleFrames.length];
-            }
-        }
         const frames = this.sprites[this.direction];
         if (Array.isArray(frames)) {
             return frames[this.walkFrame] || frames[0];

@@ -1,5 +1,4 @@
 import { ITEM_CATALOG } from "./inventory.js";
-import { dimScreen, pixelPanel, pixelHighlight, pixelSlider, pixelText, pixelItemIcon } from "./pixelUI.js";
 
 /**
  * Developer-only menu for tuning how the player feels during gameplay.
@@ -9,13 +8,10 @@ export class DeveloperMenu {
     /**
      * @param {Player} player - Player whose movement settings are adjusted.
      * @param {Menu} menu - Normal menu, used to match its text size.
-     * @param {Storage} storage - Browser storage or test substitute.
-     * @param {Inventory|null} inventory - Items to add or remove for testing.
-     * @param {Camera|null} camera - Camera whose zoom can be adjusted.
+     * @param {Storage} storage - Optional storage substitute for unit tests.
      */
-    constructor(player, menu, storage = localStorage, inventory = null, camera = null) {
+    constructor(player, menu, storage = localStorage, inventory = null) {
         this.player = player;
-        this.camera = camera;
         this.menu = menu;
         this.storage = storage;
         this.inventory = inventory;
@@ -28,8 +24,7 @@ export class DeveloperMenu {
             { key: "friction", label: "Ground Friction", min: 0.05, max: 0.90, step: 0.05, value: 0.25 },
             { key: "speed", label: "Base Speed", min: 1, max: 8, step: 0.25, value: 3 },
             { key: "acceleration", label: "Acceleration", min: 0.10, max: 2, step: 0.05, value: 0.75 },
-            { key: "animationDelay", label: "Walk Frame Delay", min: 3, max: 16, step: 1, value: 8 },
-            { key: "zoom", label: "Camera Zoom", min: 0.5, max: 3, step: 0.25, value: 1 }
+            { key: "animationDelay", label: "Walk Frame Delay", min: 3, max: 16, step: 1, value: 8 }
         ];
 
         this.loadSettings();
@@ -71,7 +66,6 @@ export class DeveloperMenu {
     changeSetting(direction) {
         if (this.selectedSetting >= this.settings.length) {
             if (!this.inventory) return;
-            // Rows after the sliders change the corresponding item quantity.
             const item = ITEM_CATALOG[this.selectedSetting - this.settings.length];
             this.inventory.setQuantity(item.id, this.inventory.getQuantity(item.id) + direction);
             return;
@@ -84,14 +78,10 @@ export class DeveloperMenu {
         this.saveSettings();
     }
 
-    /** Applies movement tuning to the player and zoom to the camera. */
+    /** Applies the four tuning values directly to the current player. */
     applySettings() {
         for (const setting of this.settings) {
-            if (setting.key === "zoom") {
-                if (this.camera) this.camera.zoom = setting.value;
-            } else {
-                this.player[setting.key] = setting.value;
-            }
+            this.player[setting.key] = setting.value;
         }
     }
 
@@ -127,57 +117,102 @@ export class DeveloperMenu {
         }
     }
 
-    /** Draws a square-edged gray slider with a pixel-font value. */
+    /**
+     * Draws a percentage bar and value for the selected property.
+     * @param {Object} setting - Developer setting definition.
+     * @param {number} x - Bar's left edge.
+     * @param {number} y - Bar's vertical center.
+     */
     drawSlider(setting, x, y) {
+        const sliderWidth = 150;
         const fraction = (setting.value - setting.min) / (setting.max - setting.min);
-        pixelSlider(x, y, 150, fraction);
+
+        noStroke();
+        fill(80, 80, 100);
+        rect(x, y - 7, sliderWidth, 14, 5);
+        fill(100, 150, 255);
+        rect(x, y - 7, sliderWidth * fraction, 14, 5);
+        fill(255);
+        circle(x + sliderWidth * fraction, y, 17);
+
         let valueText = setting.value.toFixed(2);
         if (setting.key === "friction") valueText = Math.round(setting.value * 100) + "%";
         if (setting.key === "animationDelay") valueText = String(setting.value);
-        if (setting.key === "zoom") valueText = setting.value.toFixed(2) + "X";
-        pixelText(valueText, x + 162, y, 2);
+
+        fill(255);
+        textAlign(LEFT, CENTER);
+        textSize(this.menu.getTextSize());
+        text(valueText, x + sliderWidth + 15, y);
     }
 
-    /** Draws the scrollable grayscale pixel-art developer screen. */
+    /**
+     * Displays movement controls followed by editable counts for each spell
+     * and potion. A scrolling list keeps the menu readable at 800 x 600.
+     */
     display() {
         if (!this.isOpen) return;
         push();
+        const fontSize = this.menu.getTextSize();
         const rows = this.settings.length + (this.inventory ? ITEM_CATALOG.length : 0);
         const visibleRows = 6;
         const start = Math.min(Math.max(0, this.selectedSetting - visibleRows + 1),
                                Math.max(0, rows - visibleRows));
 
-        dimScreen();
-        pixelPanel(width / 2 - 290, height / 2 - 255, 580, 510);
-        const rowUnit = Math.min(2, this.menu.textSizeIndex + 1 || 2);
-        pixelText("DEVELOPER SETTINGS", width / 2, height / 2 - 220,
-                  this.menu.getTextSize() >= 24 ? 3 : 2, "center");
-        pixelText("MOVEMENT / CAMERA / TEST ITEMS", width / 2, height / 2 - 188, 1, "center", 190);
+        noStroke();
+        fill(0, 0, 0, 150);
+        rect(0, 0, width, height);
+        fill(50, 50, 70);
+        stroke(255);
+        strokeWeight(2);
+        rect(width / 2 - 290, height / 2 - 255, 580, 510, 10);
+
+        noStroke();
+        fill(255);
+        textAlign(CENTER, CENTER);
+        textSize(Math.min(fontSize + 8, 28));
+        text("Developer Settings", width / 2, height / 2 - 220);
+        textSize(14);
+        text("Movement + Inventory Test Items", width / 2, height / 2 - 190);
 
         for (let visible = 0; visible < visibleRows; visible++) {
             const index = start + visible;
             if (index >= rows) break;
             const y = height / 2 - 145 + visible * 57;
             if (index === this.selectedSetting) {
-                pixelHighlight(width / 2 - 265, y - 25, 530, 50);
+                fill(70, 80, 110);
+                stroke(100, 150, 255);
+                strokeWeight(2);
+                rect(width / 2 - 265, y - 25, 530, 50, 5);
             }
+            noStroke();
+            fill(255);
+            textAlign(LEFT, CENTER);
+            textSize(Math.min(fontSize, 18));
             if (index < this.settings.length) {
                 const setting = this.settings[index];
-                pixelText(setting.label + ":", width / 2 - 240, y, rowUnit);
-                this.drawSlider(setting, width / 2 - 25, y);
+                text(setting.label + ":", width / 2 - 240, y);
+                this.drawSlider(setting, width / 2 - 30, y);
             } else {
                 const item = ITEM_CATALOG[index - this.settings.length];
-                pixelText(item.shortName + " (" + item.type + "):", width / 2 - 240, y, rowUnit);
-                pixelItemIcon(item, width / 2 + 100, y, 2);
-                pixelText("X" + this.inventory.getQuantity(item.id), width / 2 + 150, y, 2);
+                text(item.name + " (" + item.type + "):", width / 2 - 240, y);
+                fill(...item.color);
+                rect(width / 2 + 90, y - 11, 22, 22, 4);
+                fill(255);
+                textAlign(CENTER, CENTER);
+                textSize(18);
+                text("" + this.inventory.getQuantity(item.id), width / 2 + 162, y);
+                textSize(13);
+                text("0–9", width / 2 + 224, y);
             }
         }
 
-        pixelText("ROW " + (this.selectedSetting + 1) + "/" + rows +
-                  "   W/S: MOVE   HOLD A/D: ADJUST",
-                  width / 2, height / 2 + 215, 1, "center", 225);
-        pixelText("P: CLOSE   TAB: INVENTORY   ESC: SETTINGS",
-                  width / 2, height / 2 + 238, 1, "center", 225);
+        noStroke();
+        fill(210);
+        textAlign(CENTER, CENTER);
+        textSize(13);
+        text("Row " + (this.selectedSetting + 1) + "/" + rows +
+             "    W/S: Navigate    A/D: Adjust", width / 2, height / 2 + 215);
+        text("P: Close    E: Assign hotkeys", width / 2, height / 2 + 238);
         pop();
     }
 }
