@@ -42,10 +42,10 @@ _
 
 | Issue # | User story | Estimate | Owner | Done? | Built by |
 |---------|------------|----------|-------|-------|----------|
-|         |            |          |       |       |           |
-|         |            |          |       |       |           |
-|         |            |          |       |       |           |
-|         |            |          |       |       |           |
+|    #1     |   Player Icon Movement         |   2 hours       |    Kevin   |    Yes   |      Kevin     |
+|     #14    |     Keyboard Controls       |    2 hours      |   Kevin    |   Yes    |    Kevin       |
+|     #22   |     8 bit art       |     2 hours     |   Matthew    |   Yes    |     Matthew      |
+|         |            |          |     |      |           |
 |         |            |          |       |       |           |
 
 ---
@@ -62,7 +62,7 @@ _
 
 | Sprint | Committed | Completed |
 |--------|-----------|-----------|
-| 1      |           |           |
+| 1      |   28        |     15      |
 | 2      |           |           |
 | 3      |           |           |
 | 4      |           |           |
