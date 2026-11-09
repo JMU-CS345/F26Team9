@@ -46,7 +46,6 @@ _
 |     #14    |     Keyboard Controls       |    2 hours      |   Kevin    |   Yes    |    Kevin       |
 |     #22   |     8 bit art       |     2 hours     |   Matthew    |   Yes    |     Matthew      |
 |         |            |          |     |      |           |
-|         |            |          |       |       |           |
 
 ---
 
@@ -54,9 +53,9 @@ _
 
 | | Points |
 |---|---|
-| Committed | |
-| Completed | |
-| Completion rate | % |
+| Committed | 28 |
+| Completed | 15|
+| Completion rate | 54% |
 
 **Velocity history:**
 
@@ -71,7 +70,7 @@ _
 
 **What explains the difference between committed and completed?** _
 
----
+The lack of progress on world gen made up for the bulk of incomplete committed points.
 
 ## 5. Demo
 
@@ -79,17 +78,22 @@ _
 
 *Presenter: be ready to explain and answer questions about every completed story, including work you didn't build.*
 
-### Issue #_: *(story title)*
+### Issue #1: *Player icon movement*
 
-- [ ] *(acceptance criterion)*
-- [ ] *(acceptance criterion)*
+- [x] *Icon is visible on screen.*
+- [x] *Icon moves up/down/left/right on key press.*
+- [x] *Icon cannot leave the screen.*
 
-### Issue #_: *(story title)*
+### Issue #14: *Keyboard-only controls*
 
-- [ ] *(acceptance criterion)*
-- [ ] *(acceptance criterion)*
+- [x] *All menus are navigable by keyboard.*
+- [x] *All gameplay actions have key bindings.*
+- [x] *Keys are listed somewhere in game.*
 
-*(Repeat for each completed story.)*
+### Issue #18: *8-bit sprite art*
+
+- [x] *Sprites replace placeholder shapes.*
+- [x] *Art style is consistent across screens.*
 
 ---
 
@@ -99,8 +103,8 @@ _
 
 | Issue # | What remains | New estimate | Back in backlog? |
 |---------|--------------|--------------|------------------|
-|         |              |              | [ ]              |
-|         |              |              | [ ]              |
+|    #3     |    World gen          |     5 hours         | Yes |
+|     #2   |         Tile map     |      3 hours        | Yes              |
 
 ---
 
@@ -108,7 +112,7 @@ _
 
 *Record what the instructor said: what they liked, what should change, and any new priorities. (Sprint 4: write "n/a")*
 
-_
+The stakeholder liked the lighting and thought the game was very pretty, but recommended prioritizing player statistics and enemies/combat.
 
 ---
 
@@ -116,36 +120,37 @@ _
 
 *How did the backlog change in response to the feedback? (Sprint 4: write "n/a")*
 
-**New stories added:** _
+**New stories added:** None
 
-**Priorities changed:** _
+**Priorities changed:** World gen -> stats and combat
 
-**Stories removed:** _
+**Stories removed:** None
 
-**If no change was needed, why not?** _
+**If no change was needed, why not?** 
 
----
+No stories changed/added because the priorities were the main thing changed.
 
 ## 9. Quality
 
 *Give the stakeholder an honest picture of the build's quality.*
 
-**CI status on `production`:** *(passing / failing)*
+**CI status on `production`:** *Passing*
 
-**Number of specs:** _
+**Number of specs:** 3
 
-**Known bugs in the deployed build:** _
+**Known bugs in the deployed build:** N/A
 
----
 
 ## 10. Checklist
 
-- [ ] Demo given from the deployed GitHub Pages build
-- [ ] Demo given by one presenter, crediting the members who built each story
-- [ ] Release PR merged before the review begins
-- [ ] Every committed item marked Done or Not Done
-- [ ] Every item marked Done has all its acceptance criteria checked in section 5
-- [ ] Metrics filled in, with the committed/completed difference explained
-- [ ] Stakeholder feedback recorded (Sprint 4: n/a)
-- [ ] Backlog updated, or the reason no change was needed explained (Sprint 4: n/a)
-- [ ] Report committed to `scrum/review/` via pull request by 11:59 p.m. on the day of the review
+- [x] Demo given from the deployed GitHub Pages build
+- [x] Demo given by one presenter, crediting the members who built each story
+- [x] Release PR merged before the review begins
+- [x] Every committed item marked Done or Not Done
+- [x] Every item marked Done has all its acceptance criteria checked in section 5
+- [x] Metrics filled in, with the committed/completed difference explained
+- [x] Stakeholder feedback recorded (Sprint 4: n/a)
+- [x] Backlog updated, or the reason no change was needed explained (Sprint 4: n/a)
+- [x] Report committed to `scrum/review/` via pull request by 11:59 p.m. on the day of the review
+
+
