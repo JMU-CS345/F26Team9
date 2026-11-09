@@ -25,10 +25,6 @@ let hotkeyMessageFrames = 0;
 // The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
 const SPRITE_SIZE = 64;
 
-// Warm light carried by the player.
-const PLAYER_LIGHT_RADIUS = 260;
-const PLAYER_LIGHT_COLOR = [1.0, 0.82, 0.55];
-
 const PLAYER_DIRECTIONS = [
     "south", "southeast", "east", "northeast",
     "north", "northwest", "west", "southwest"
@@ -170,18 +166,11 @@ function draw() {
 }
 
 /**
- * Lists the lights for the current frame. Add torches or spell lights here.
+ * Lists the lights for the current frame: the light orb plus every active spell.
  * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]}.
  */
 function getLights() {
-    // Perlin noise gives a gentle, uneven flicker like a flame.
-    const flicker = 1 + 0.1 * (noise(millis() * 0.002) - 0.5);
-    return [{
-        x: player.x + player.size / 2,
-        y: player.y + player.size / 2,
-        radius: PLAYER_LIGHT_RADIUS * flicker,
-        color: PLAYER_LIGHT_COLOR
-    }];
+    return [...lightOrb.getLights(), ...spellCaster.getLights()];
 }
 
 /**
