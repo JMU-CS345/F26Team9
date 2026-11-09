@@ -3,7 +3,7 @@ import { ITEM_CATALOG, Inventory } from "../src/inventory.js";
 import { InventoryMenu } from "../src/inventoryMenu.js";
 import { DeveloperMenu } from "../src/developerMenu.js";
 
-/** Jasmine unit tests for E-key inventory and developer item counts. */
+/** Jasmine unit tests for inventory hotkeys and developer item counts. */
 describe("Inventory item counts and hotkeys", function () {
     function storage() {
         const saved = {};
@@ -230,13 +230,13 @@ describe("Developer menu inventory testing controls", function () {
         const player = new Player(100,100);
         const menu = new DeveloperMenu(player, { getTextSize: () => 18 }, storage, inventory);
         menu.toggle();
-        for (let i = 0; i < 4; i++) menu.handleInput("s");
+        for (let i = 0; i < 5; i++) menu.handleInput("s");
         return { menu, inventory, storage, player };
     }
 
-    it("shows inventory counts after the four movement controls", function () {
+    it("shows inventory counts after movement and zoom controls", function () {
         const { menu } = setupDev();
-        expect(menu.selectedSetting).toBe(4);
+        expect(menu.selectedSetting).toBe(5);
     });
 
     it("increases and decreases potion counts with D/A", function () {
