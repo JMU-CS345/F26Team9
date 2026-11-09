@@ -35,6 +35,13 @@ let hotkeyMessageFrames = 0;
 // Warm light carried by the player.
 const PLAYER_LIGHT_RADIUS = 260;
 const PLAYER_LIGHT_COLOR = [1.0, 0.82, 0.55];
+// The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
+const SPRITE_SIZE = 64;
+
+const PLAYER_DIRECTIONS = [
+    "south", "southeast", "east", "northeast",
+    "north", "northwest", "west", "southwest"
+];
 
 /** Loads character artwork before setup(). */
 function preload() {
