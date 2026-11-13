@@ -1,38 +1,18 @@
 
-class WizardInterface {
-    HP;
-    ATK;
-    Mana;
-    DEF;
-    takeDamage(damage) {
-        this.HP -= damage;
-    }
-}
+class WizardStats {
+    constructor(wizardClass) {
+        const classStats = {
+            Fire: [100, 30, 50, 10],
+            Mind: [75, 50, 75, 7],
+            Earth: [150, 50, 30, 20]
+        };
+        const stats = classStats[wizardClass];
 
-/** @implements {WizardInterface} */
-class FireWizard {
-    constructor(HP = 100, ATK = 10, Mana = 50, DEF = 10) {
-        this.HP = HP;
-        this.ATK = ATK;
-        this.Mana = Mana;
-        this.DEF = DEF;
-    }
-}
+        if (!stats) {
+            throw new Error("Choose Fire, Mind, or Earth.");
+        }
 
-class MindWizard {
-    constructor(HP = 75, ATK = 20, Mana = 75, DEF = 7) {
-        this.HP = HP;
-        this.ATK = ATK;
-        this.Mana = Mana;
-        this.DEF = DEF;
-    }
-}
-
-class EarthWizard {
-    constructor(HP = 150, ATK = 10, Mana = 35, DEF = 20) {
-        this.HP = HP;
-        this.ATK = ATK;
-        this.Mana = Mana;
-        this.DEF = DEF;
+        this.wizardClass = wizardClass;
+        [this.HP, this.ATK, this.Mana, this.DEF] = stats;
     }
 }
