@@ -10,6 +10,7 @@ import { LightOrb } from "./lightOrb.js";
 import { createRandom, generateWorld } from "./worldGenerator.js";
 import { WorldRenderer } from "./worldRenderer.js";
 import { Camera } from "./camera.js";
+import { Torch } from "./torch.js";
 
 // Objects used throughout the game.
 let player;
@@ -26,6 +27,7 @@ let tileSheets;
 let world;
 let worldRenderer;
 let camera;
+let torches = [];
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
 
@@ -113,6 +115,10 @@ function createWorld() {
     world = generateWorld(WORLD_COLS, WORLD_ROWS, createRandom(Date.now()), { maxRooms: 14 });
     worldRenderer.build(world, 0, 0);
 
+    // Each torch hangs just below the wall line of its tile, flickering out of sync.
+    torches = world.torches.map(({ col, row }, i) =>
+        new Torch((col + 0.5) * TILE_SIZE, (row + 0.5) * TILE_SIZE + 10, i * 37));
+
     if (world.start) {
         const [col, row] = world.start;
         player.x = (col + 0.5) * TILE_SIZE - player.size / 2;
@@ -182,6 +188,7 @@ function draw() {
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
+        for (const torch of torches) torch.update(frameScale);
         camera.follow(player.x + player.size / 2, player.y + player.size / 2, frameScale);
     } else {
         player.stop();
@@ -201,6 +208,7 @@ function draw() {
     // Spells and the orb glow, so draw them after lighting where darkness cannot dim them.
     push();
     camera.apply();
+    for (const torch of torches) torch.display();
     spellCaster.display();
     lightOrb.display();
     pop();
@@ -238,15 +246,28 @@ function draw() {
 }
 
 /**
- * Lists the lights for the current frame: the light orb plus every active spell.
+ * Lists the lights for the current frame: the light orb, every active spell, and
+ * the torches that light up part of the screen. The shader takes a limited number
+ * of lights, so torches come last and the closest ones are listed first.
  * Lights are kept in world pixels and converted to the screen for the lighting pass.
  * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]} in screen pixels.
  */
 function getLights() {
-    return [...lightOrb.getLights(), ...spellCaster.getLights()].map(light => {
+    const toScreen = light => {
         const [x, y] = camera.toScreen(light.x, light.y);
         return { x, y, radius: light.radius * camera.zoom, color: light.color };
-    });
+    };
+    const onScreen = light => light.x + light.radius > 0 && light.x - light.radius < width
+        && light.y + light.radius > 0 && light.y - light.radius < height;
+    const distanceToCenter = light => Math.hypot(light.x - width / 2, light.y - height / 2);
+
+    const torchLights = torches.flatMap(torch => torch.getLights())
+        .map(toScreen)
+        .filter(onScreen)
+        .sort((a, b) => distanceToCenter(a) - distanceToCenter(b));
+
+    return [...lightOrb.getLights(), ...spellCaster.getLights()].map(toScreen)
+        .concat(torchLights);
 }
 
 /**

@@ -54,6 +54,7 @@ export class World {
         this.floor = new TileLayer(cols, rows, FLOOR.EMPTY);
         this.walls = new TileLayer(cols, rows, WALL.NONE);
         this.rooms = [];
+        this.torches = [];
         this.start = null;
     }
 
@@ -152,6 +153,7 @@ export function generateWorld(cols, rows, random = Math.random, options = {}) {
             settings.corridorWidth, random, randomInt);
     }
     buildWalls(world);
+    placeTorches(world);
 
     world.start = world.rooms.length > 0 ? roomCenter(world.rooms[0]) : null;
     return world;
@@ -228,4 +230,47 @@ function buildWalls(world) {
             world.walls.set(col, row, material === FLOOR.WOOD ? WALL.WOOD : WALL.STONE);
         }
     }
+}
+
+/**
+ * Hangs torches on each room's top wall: one in the middle of a narrow room,
+ * two spaced a third of the way in from each side of a wide one. A torch only
+ * goes on a straight piece of wall with floor below it, never on a corner,
+ * junction, or doorway, so it never looks like it is floating.
+ */
+function placeTorches(world) {
+    const used = new Set();
+    for (const room of world.rooms) {
+        const row = room.y - 1;
+        const targets = room.w >= 8
+            ? [room.x + Math.floor(room.w / 3), room.x + room.w - 1 - Math.floor(room.w / 3)]
+            : [room.x + Math.floor(room.w / 2)];
+
+        for (const target of targets) {
+            const col = nearestTorchSpot(world, room, row, target, used);
+            if (col === null) continue;
+            used.add(row * world.cols + col);
+            world.torches.push({ col, row });
+        }
+    }
+}
+
+/**
+ * Finds the wall tile on a room's top row closest to a target column that can hold a torch.
+ * @returns {number|null} The column, or null if the room has no suitable wall.
+ */
+function nearestTorchSpot(world, room, row, target, used) {
+    // A straight east-west wall: neighbors on both sides, none above or below.
+    const STRAIGHT = 2 + 8;
+    for (let distance = 0; distance < room.w; distance++) {
+        for (const col of [target - distance, target + distance]) {
+            if (col < room.x || col >= room.x + room.w) continue;
+            if (used.has(row * world.cols + col)) continue;
+            if (world.isWall(col, row) && world.isFloor(col, row + 1)
+                    && world.wallMask(col, row) === STRAIGHT) {
+                return col;
+            }
+        }
+    }
+    return null;
 }
