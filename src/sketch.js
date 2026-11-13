@@ -11,6 +11,7 @@ import { createRandom, generateWorld } from "./worldGenerator.js";
 import { WorldRenderer } from "./worldRenderer.js";
 import { Camera } from "./camera.js";
 import { Torch } from "./torch.js";
+import { WallCollider } from "./wallCollider.js";
 
 // Objects used throughout the game.
 let player;
@@ -28,6 +29,7 @@ let world;
 let worldRenderer;
 let camera;
 let torches = [];
+let walls;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
 
@@ -104,6 +106,7 @@ function setup() {
         iceball: new SpriteSheet(spellImages.iceball, 4, 10),
         sparkle: new SpriteSheet(spellImages.sparkle, 5, 2)
     });
+    spellCaster.walls = walls;
 }
 
 /**
@@ -114,6 +117,7 @@ function createWorld() {
     // A new seed every time, so each run gets a different layout.
     world = generateWorld(WORLD_COLS, WORLD_ROWS, createRandom(Date.now()), { maxRooms: 14 });
     worldRenderer.build(world, 0, 0);
+    walls = new WallCollider(world, TILE_SIZE);
 
     // Each torch hangs just below the wall line of its tile, flickering out of sync.
     torches = world.torches.map(({ col, row }, i) =>
@@ -182,7 +186,7 @@ function draw() {
     const paused = menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
     if (!paused) {
         // Movement and spells are limited to the world, not the screen.
-        player.handleInput(worldWidth(), worldHeight());
+        player.handleInput(worldWidth(), worldHeight(), walls);
 
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
