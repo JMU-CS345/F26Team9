@@ -87,7 +87,7 @@ export class Projectile {
     static FRAME_TIME = 3;
 
     // Distances back along the path for the dimmer trailing lights, and their brightness.
-    static TRAIL_LIGHTS = [{ behind: 32, strength: 0.55 }, { behind: 70, strength: 0.3 }];
+    static TRAIL_LIGHTS = [{ behind: 16, strength: 0.55 }, { behind: 34, strength: 0.3 }];
 
     // Sparks shed per 60 FPS frame, and how long each one lives.
     static SPARK_RATE = 1.5;
@@ -145,8 +145,9 @@ export class Projectile {
      * @param {number} frameScale - Elapsed time in 60 FPS frames.
      * @param {number} w - Canvas width.
      * @param {number} h - Canvas height.
+     * @param {WallCollider|null} walls - Optional walls the bolt explodes against.
      */
-    update(frameScale, w, h) {
+    update(frameScale, w, h, walls = null) {
         this.age += frameScale;
         this.updateSparks(frameScale);
 
@@ -158,6 +159,8 @@ export class Projectile {
             return;
         }
 
+        const previousX = this.x;
+        const previousY = this.y;
         this.traveled += this.style.speed * frameScale;
         [this.x, this.y] = this.pathPoint(this.traveled);
 
@@ -170,12 +173,37 @@ export class Projectile {
         this.emitSparks(frameScale);
 
         const outside = this.x < 0 || this.y < 0 || this.x > w || this.y > h;
-        if (this.traveled >= this.style.range || outside) {
+        const hitWall = walls !== null && this.hitsWall(walls, previousX, previousY);
+        if (this.traveled >= this.style.range || outside || hitWall) {
             // Explode on the edge, not past it, so the blast stays visible.
             this.x = Math.max(0, Math.min(this.x, w));
             this.y = Math.max(0, Math.min(this.y, h));
             this.explodeAge = 0;
         }
+    }
+
+    /**
+     * Checks the whole step from the previous position, every 2 pixels, so a fast
+     * bolt cannot skip over a thin wall between frames. The starting point is
+     * checked too, so a bolt that starts inside a wall explodes at once. On a hit,
+     * the bolt moves back to the point where it entered the wall.
+     * @param {WallCollider} walls - Walls to check.
+     * @param {number} fromX - Position before this step.
+     * @param {number} fromY - Position before this step.
+     * @returns {boolean} True if the step entered a wall.
+     */
+    hitsWall(walls, fromX, fromY) {
+        const steps = Math.max(1, Math.ceil(Math.hypot(this.x - fromX, this.y - fromY) / 2));
+        for (let i = 0; i <= steps; i++) {
+            const px = fromX + (this.x - fromX) * (i / steps);
+            const py = fromY + (this.y - fromY) * (i / steps);
+            if (walls.blocksPoint(px, py)) {
+                this.x = px;
+                this.y = py;
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -186,16 +214,16 @@ export class Projectile {
         this.sparkTimer += Projectile.SPARK_RATE * frameScale;
         while (this.sparkTimer >= 1) {
             this.sparkTimer--;
-            const back = 0.6 + Math.random() * 1.2;
-            const spread = (Math.random() - 0.5) * 1.6;
+            const back = 0.3 + Math.random() * 0.6;
+            const spread = (Math.random() - 0.5) * 0.8;
             this.sparks.push({
-                x: this.x + (Math.random() - 0.5) * 6,
-                y: this.y + (Math.random() - 0.5) * 6,
+                x: this.x + (Math.random() - 0.5) * 3,
+                y: this.y + (Math.random() - 0.5) * 3,
                 vx: -this.dx * back - this.dy * spread,
                 vy: -this.dy * back + this.dx * spread,
                 age: 0,
                 life: Projectile.SPARK_LIFE * (0.6 + Math.random() * 0.4),
-                size: 2 + Math.random() * 2.5
+                size: 1 + Math.random() * 1.2
             });
         }
     }
@@ -268,7 +296,7 @@ export class Projectile {
         push();
         translate(this.x, this.y);
         rotate(this.angle);
-        this.style.sheet.drawFrame(frame, 128, 96);
+        this.style.sheet.drawFrame(frame, 48, 36);
         pop();
     }
 
@@ -329,7 +357,7 @@ export class LightningStrike {
         for (let i = 0; i <= LightningStrike.SEGMENTS; i++) {
             const t = i / LightningStrike.SEGMENTS;
             const isEnd = i === 0 || i === LightningStrike.SEGMENTS;
-            const jag = isEnd ? 0 : (Math.random() - 0.5) * 34;
+            const jag = isEnd ? 0 : (Math.random() - 0.5) * 12;
             points.push([
                 this.x1 + (this.x2 - this.x1) * t + nx * jag,
                 this.y1 + (this.y2 - this.y1) * t + ny * jag
@@ -368,7 +396,7 @@ export class LightningStrike {
         return [0, 0.5, 1].map(t => ({
             x: this.x1 + (this.x2 - this.x1) * t,
             y: this.y1 + (this.y2 - this.y1) * t,
-            radius: 190,
+            radius: 100,
             color
         }));
     }
@@ -381,15 +409,15 @@ export class LightningStrike {
         strokeJoin(ROUND);
 
         stroke(170, 180, 255, alpha * 0.5);
-        strokeWeight(7);
+        strokeWeight(3);
         this.drawPath();
 
         stroke(255, 255, 240, alpha);
-        strokeWeight(2);
+        strokeWeight(1);
         this.drawPath();
 
         translate(this.x2, this.y2);
-        this.sparkle.drawFrame(this.age / 2, 56, 56);
+        this.sparkle.drawFrame(this.age / 2, 22, 22);
         pop();
     }
 
@@ -425,7 +453,7 @@ export class HealBurst {
         this.sparkles = [];
         for (let i = 0; i < HealBurst.SPARKLES; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const distance = 8 + Math.random() * 22;
+            const distance = 4 + Math.random() * 10;
             this.sparkles.push({
                 ox: Math.cos(angle) * distance,
                 oy: Math.sin(angle) * distance,
@@ -457,7 +485,7 @@ export class HealBurst {
         const pulse = Math.sin(Math.PI * t);
         const [x, y] = this.center;
         const color = scaleColor(HealBurst.LIGHT_COLOR, pulse);
-        return [{ x, y, radius: 120 + 110 * pulse, color }];
+        return [{ x, y, radius: 60 + 50 * pulse, color }];
     }
 
     /** Draws each sparkle that is currently alive, drifting upward. */
@@ -467,8 +495,8 @@ export class HealBurst {
             const life = this.age - s.delay;
             if (life < 0 || life >= HealBurst.SPARKLE_LIFE) continue;
             push();
-            translate(cx + s.ox, cy + s.oy - life * 1.2);
-            this.sparkle.drawFrame(life / 2, 28, 28);
+            translate(cx + s.ox, cy + s.oy - life * 0.5);
+            this.sparkle.drawFrame(life / 2, 12, 12);
             pop();
         }
     }
