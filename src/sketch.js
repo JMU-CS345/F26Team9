@@ -7,6 +7,9 @@ import { LightingRenderer } from "./lightingRenderer.js";
 import { SpellCaster } from "./spellCaster.js";
 import { SpriteSheet } from "./spellEffects.js";
 import { LightOrb } from "./lightOrb.js";
+import { createRandom, generateWorld } from "./worldGenerator.js";
+import { WorldRenderer } from "./worldRenderer.js";
+import { Camera } from "./camera.js";
 
 // Objects used throughout the game.
 let player;
@@ -19,11 +22,28 @@ let lighting;
 let spellImages;
 let spellCaster;
 let lightOrb;
+let tileSheets;
+let world;
+let worldRenderer;
+let camera;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
 
 // The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
 const SPRITE_SIZE = 64;
+
+// Size of one world tile in world pixels; the tile art is 25 x 25.
+const TILE_SIZE = 25;
+
+// World size in tiles. Larger than the screen; the camera follows the player.
+const WORLD_COLS = 64;
+const WORLD_ROWS = 40;
+
+// Screen pixels per world pixel. A whole number keeps the pixel art crisp.
+const CAMERA_ZOOM = 3;
+
+// Shown behind the world where there are no tiles.
+const VOID_COLOR = [16, 14, 18];
 
 const PLAYER_DIRECTIONS = [
     "south", "southeast", "east", "northeast",
@@ -37,6 +57,10 @@ function preload() {
         fireball: loadImage("src/assets/player/fireball.png"),
         iceball: loadImage("src/assets/player/fireball_blue.png"),
         sparkle: loadImage("src/assets/player/flash01.png")
+    };
+    tileSheets = {
+        floor: loadImage("src/assets/tiles/floor-tiles.png"),
+        wall: loadImage("src/assets/tiles/wall-tiles.png")
     };
 }
 
@@ -62,7 +86,11 @@ function setup() {
     createCanvas(windowWidth, windowHeight);
     noSmooth();
 
-    player = new Player(width / 2, height / 2, createPlayerSprites(playerSpriteSheet));
+    player = new Player(0, 0, createPlayerSprites(playerSpriteSheet));
+    camera = new Camera(CAMERA_ZOOM);
+    camera.setView(width, height);
+    worldRenderer = new WorldRenderer(tileSheets.floor, tileSheets.wall, TILE_SIZE);
+    createWorld();
     lightOrb = new LightOrb(player.x, player.y);
     menu = new Menu();
     inventory = new Inventory();
@@ -74,6 +102,36 @@ function setup() {
         iceball: new SpriteSheet(spellImages.iceball, 4, 10),
         sparkle: new SpriteSheet(spellImages.sparkle, 5, 2)
     });
+}
+
+/**
+ * Generates a new world, moves the player to the middle of the starting room,
+ * and points the camera at them.
+ */
+function createWorld() {
+    // A new seed every time, so each run gets a different layout.
+    world = generateWorld(WORLD_COLS, WORLD_ROWS, createRandom(Date.now()), { maxRooms: 14 });
+    worldRenderer.build(world, 0, 0);
+
+    if (world.start) {
+        const [col, row] = world.start;
+        player.x = (col + 0.5) * TILE_SIZE - player.size / 2;
+        player.y = (row + 0.5) * TILE_SIZE - player.size / 2;
+        player.stop();
+    }
+
+    camera.setBounds(worldWidth(), worldHeight());
+    camera.snapTo(player.x + player.size / 2, player.y + player.size / 2);
+}
+
+/** @returns {number} World width in world pixels. */
+function worldWidth() {
+    return world.cols * TILE_SIZE;
+}
+
+/** @returns {number} World height in world pixels. */
+function worldHeight() {
+    return world.rows * TILE_SIZE;
 }
 
 /** Draws the four assigned hotkeys during gameplay. */
@@ -115,25 +173,39 @@ function drawHotbar() {
 
 /** Main game loop; all menus freeze movement and momentum. */
 function draw() {
-    background(220);
     const paused = menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
     if (!paused) {
-        player.handleInput(width, height);
+        // Movement and spells are limited to the world, not the screen.
+        player.handleInput(worldWidth(), worldHeight());
 
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
-        spellCaster.update(frameScale, width, height);
+        spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
+        camera.follow(player.x + player.size / 2, player.y + player.size / 2, frameScale);
     } else {
         player.stop();
     }
-    player.display();
 
-    lighting.display(getLights(), millis() / 1000);
+    background(...VOID_COLOR);
+
+    // The world and player are drawn through the camera, in world pixels.
+    push();
+    camera.apply();
+    worldRenderer.display();
+    player.display();
+    pop();
+
+    lighting.display(getLights(), millis() / 1000, camera.scroll);
 
     // Spells and the orb glow, so draw them after lighting where darkness cannot dim them.
+    push();
+    camera.apply();
     spellCaster.display();
     lightOrb.display();
+    pop();
+
+    // The HUD and menus below are drawn in screen pixels, outside the camera.
 
     // Light text so the HUD stays readable over the dark ambient lighting.
     push();
@@ -167,10 +239,14 @@ function draw() {
 
 /**
  * Lists the lights for the current frame: the light orb plus every active spell.
- * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]}.
+ * Lights are kept in world pixels and converted to the screen for the lighting pass.
+ * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]} in screen pixels.
  */
 function getLights() {
-    return [...lightOrb.getLights(), ...spellCaster.getLights()];
+    return [...lightOrb.getLights(), ...spellCaster.getLights()].map(light => {
+        const [x, y] = camera.toScreen(light.x, light.y);
+        return { x, y, radius: light.radius * camera.zoom, color: light.color };
+    });
 }
 
 /**
@@ -243,6 +319,7 @@ function keyPressed(event) {
  */
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+    camera.setView(width, height);
     lighting.resize(width, height);
 }
 

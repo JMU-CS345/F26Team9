@@ -16,6 +16,9 @@ export class LightOrb {
     static FOLLOW = 0.08;
 
     static LIGHT_RADIUS = 260;
+
+    // Radius of the drawn glow around the orb, in world pixels.
+    static HALO_RADIUS = 20;
     static LIGHT_COLOR = [1.0, 0.85, 0.6];
 
     /**
@@ -73,11 +76,20 @@ export class LightOrb {
         noStroke();
         translate(this.x, this.drawY);
 
-        // Layered translucent circles fade the halo out from the center.
-        for (let i = 4; i >= 1; i--) {
-            fill(255, 210, 140, 26);
-            circle(0, 0, 8 + i * 8);
+        // One smooth radial gradient for the halo. Stacked translucent circles
+        // show as visible rings, especially when the camera is zoomed in.
+        // Alpha falls off with the square of the distance, like the light itself.
+        const halo = drawingContext.createRadialGradient(0, 0, 0, 0, 0, LightOrb.HALO_RADIUS);
+        for (let i = 0; i <= 8; i++) {
+            const t = i / 8;
+            const alpha = 0.6 * (1 - t) * (1 - t);
+            halo.addColorStop(t, `rgba(255, 215, 150, ${alpha.toFixed(3)})`);
         }
+        drawingContext.fillStyle = halo;
+        drawingContext.beginPath();
+        drawingContext.arc(0, 0, LightOrb.HALO_RADIUS, 0, Math.PI * 2);
+        drawingContext.fill();
+
         fill(255, 236, 190);
         circle(0, 0, 11);
         fill(255);

@@ -12,7 +12,7 @@ export class Player extends Entity {
      * @param {Object} sprites - Optional directional sprite frames.
      */
     constructor(x, y, sprites = {}) {
-        super(x, y, 32, 3, sprites);
+        super(x, y, 32, 2, sprites);
         this.placeholderColor = [100, 50, 200];
     }
 

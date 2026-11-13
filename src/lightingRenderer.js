@@ -37,13 +37,15 @@ export class LightingRenderer {
      * Call after drawing the world and before drawing the HUD.
      * @param {Object[]} lights - Lights as {x, y, radius, color: [r, g, b]} (0 to 1).
      * @param {number} time - Time in seconds, used to animate particles.
+     * @param {number[]} scroll - Camera offset in screen pixels, so particles move with the world.
      */
-    display(lights, time) {
+    display(lights, time, scroll = [0, 0]) {
         const packed = LightingRenderer.packLights(lights);
 
         this.layer.shader(this.shader);
         this.shader.setUniform("uResolution", [this.layer.width, this.layer.height]);
         this.shader.setUniform("uTime", time);
+        this.shader.setUniform("uScroll", scroll);
         this.shader.setUniform("uAmbient", this.ambient);
         this.shader.setUniform("uLightTint", this.lightTint);
         this.shader.setUniform("uLightCount", packed.count);

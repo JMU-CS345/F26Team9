@@ -159,7 +159,7 @@ describe("Player keyboard input and Entity inheritance", function () {
     it("inherits Entity movement and facing", function () {
         const player = new Player(50, 50);
         expect(player instanceof Entity).toBe(true);
-        expect(player.speed).toBe(3);
+        expect(player.speed).toBe(2);
 
         holdKeys("w");
         player.handleInput(200, 200);
@@ -355,6 +355,7 @@ describe("Smooth player movement", function () {
 
     it("accelerates smoothly and reaches the base speed", function () {
         const player = new Player(100, 100);
+        player.speed = 3; // Fixed so the expected values below stay exact.
         for (let i = 0; i < 8; i++) player.moveSmooth(1, 0, 500, 500);
         expect(player.vx).toBe(3);
         expect(player.vy).toBe(0);
@@ -362,6 +363,7 @@ describe("Smooth player movement", function () {
 
     it("never exceeds the base speed", function () {
         const player = new Player(100, 100);
+        player.speed = 3; // Fixed so the expected values below stay exact.
         for (let i = 0; i < 40; i++) player.moveSmooth(1, 1, 600, 600);
         expect(Math.hypot(player.vx, player.vy)).toBeCloseTo(3, 10);
     });
@@ -377,6 +379,7 @@ describe("Smooth player movement", function () {
 
     it("applies friction and eventually comes to a complete stop", function () {
         const player = new Player(100, 100);
+        player.speed = 3; // Fixed so the expected values below stay exact.
         for (let i = 0; i < 8; i++) player.moveSmooth(1, 0, 500, 500);
         const beforeRelease = player.x;
         player.moveSmooth(0, 0, 500, 500);
@@ -475,6 +478,7 @@ describe("Smooth player movement", function () {
 
     it("clamps unusually large frame time values", function () {
         const player = new Player(100, 100);
+        player.speed = 3; // Fixed so the expected values below stay exact.
         player.moveSmooth(1, 0, 500, 500, 999);
         expect(player.vx).toBeCloseTo(2.25, 10);
         expect(player.x).toBeCloseTo(106.75, 10);
@@ -519,7 +523,7 @@ describe("Developer menu settings", function () {
 
     it("starts with sensible movement defaults", function () {
         const { player, developer } = makeMenu();
-        expect(player.speed).toBe(3);
+        expect(player.speed).toBe(2);
         expect(player.acceleration).toBe(0.75);
         expect(player.friction).toBe(0.25);
         expect(player.animationDelay).toBe(8);
@@ -533,9 +537,9 @@ describe("Developer menu settings", function () {
         developer.handleInput("s"); // select Base Speed
         expect(developer.selectedSetting).toBe(1);
         developer.handleInput("d");
-        expect(player.speed).toBe(3.25);
+        expect(player.speed).toBe(2.25);
         developer.handleInput("a");
-        expect(player.speed).toBe(3);
+        expect(player.speed).toBe(2);
         developer.toggle();
         expect(developer.isOpen).toBe(false);
     });
@@ -561,7 +565,7 @@ describe("Developer menu settings", function () {
         developer.handleInput("s");
         developer.handleInput("a");
         expect(player.animationDelay).toBe(7);
-        expect(player.speed).toBe(3);
+        expect(player.speed).toBe(2);
     });
 
     it("clamps adjustments to allowed bounds", function () {
