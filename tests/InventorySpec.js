@@ -265,7 +265,7 @@ describe("Developer menu inventory testing controls", function () {
     it("keeps developer movement settings unchanged when modifying inventory", function () {
         const { menu, player } = setupDev();
         menu.handleInput("d");
-        expect(player.speed).toBe(3);
+        expect(player.speed).toBe(2);
         expect(player.acceleration).toBe(0.75);
     });
 });

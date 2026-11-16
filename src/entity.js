@@ -34,6 +34,50 @@ export class Entity {
 
         // Default appearance when there is no directional artwork.
         this.placeholderColor = [150, 150, 150];
+
+        // Part of the entity's square that collides with walls, relative to x and y.
+        this.hitbox = { x: 0, y: 0, w: size, h: size };
+    }
+
+    /**
+     * The entity's collision box at its current position.
+     * @returns {Object} {x, y, w, h} in world pixels.
+     */
+    getHitbox() {
+        return {
+            x: this.x + this.hitbox.x,
+            y: this.y + this.hitbox.y,
+            w: this.hitbox.w,
+            h: this.hitbox.h
+        };
+    }
+
+    /**
+     * Pushes the entity back out of any wall it moved into along one axis,
+     * leaving it flush against the wall, and stops its velocity on that axis.
+     * @param {WallCollider} walls - Solid walls to collide with.
+     * @param {string} axis - "x" or "y".
+     * @param {number} delta - How far the entity just moved on that axis.
+     */
+    resolveWalls(walls, axis, delta) {
+        if (delta === 0) return;
+        const hits = walls.hits(this.getHitbox());
+        if (hits.length === 0) return;
+
+        const offset = axis === "x" ? this.hitbox.x : this.hitbox.y;
+        const length = axis === "x" ? this.hitbox.w : this.hitbox.h;
+        const size = axis === "x" ? "w" : "h";
+        if (delta > 0) {
+            // Moving right/down: stop at the nearest wall's near side.
+            const edge = Math.min(...hits.map(rect => rect[axis]));
+            this[axis] = edge - offset - length;
+        } else {
+            // Moving left/up: stop at the nearest wall's far side.
+            const edge = Math.max(...hits.map(rect => rect[axis] + rect[size]));
+            this[axis] = edge - offset;
+        }
+        if (axis === "x") this.vx = 0;
+        else this.vy = 0;
     }
 
     /**
@@ -118,8 +162,9 @@ export class Entity {
      * @param {number} canvasWidth - Width of the canvas.
      * @param {number} canvasHeight - Height of the canvas.
      * @param {number} frameScale - Elapsed time in 60 FPS frames.
+     * @param {WallCollider|null} walls - Optional walls that block movement.
      */
-    moveSmooth(dx, dy, canvasWidth, canvasHeight, frameScale = 1) {
+    moveSmooth(dx, dy, canvasWidth, canvasHeight, frameScale = 1, walls = null) {
         // Restrict large frame jumps (for example, after changing browser tabs).
         frameScale = Number.isFinite(frameScale)
             ? Math.max(0, Math.min(frameScale, 3)) : 1;
@@ -157,10 +202,14 @@ export class Entity {
         const nextY = this.y + this.vy * frameScale;
 
         // Collision stops the velocity in the blocked direction only.
+        // Resolving x before y lets the entity slide along walls instead of sticking.
         this.x = Math.max(0, Math.min(nextX, maxX));
-        this.y = Math.max(0, Math.min(nextY, maxY));
         if (this.x !== nextX) this.vx = 0;
+        if (walls) this.resolveWalls(walls, "x", this.x - oldX);
+
+        this.y = Math.max(0, Math.min(nextY, maxY));
         if (this.y !== nextY) this.vy = 0;
+        if (walls) this.resolveWalls(walls, "y", this.y - oldY);
 
         const movedX = this.x - oldX;
         const movedY = this.y - oldY;

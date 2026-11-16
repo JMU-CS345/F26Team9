@@ -12,8 +12,12 @@ export class Player extends Entity {
      * @param {Object} sprites - Optional directional sprite frames.
      */
     constructor(x, y, sprites = {}) {
-        super(x, y, 32, 3, sprites);
+        super(x, y, 32, 2, sprites);
         this.placeholderColor = [100, 50, 200];
+
+        // Only the feet collide with walls, so the head can overlap a wall above,
+        // which reads as standing in front of it in a top-down view.
+        this.hitbox = { x: 9, y: 22, w: 14, h: 8 };
     }
 
     /**
@@ -22,8 +26,9 @@ export class Player extends Entity {
      *
      * @param {number} canvasWidth - Width of the game canvas.
      * @param {number} canvasHeight - Height of the game canvas.
+     * @param {WallCollider|null} walls - Optional walls that block movement.
      */
-    handleInput(canvasWidth, canvasHeight) {
+    handleInput(canvasWidth, canvasHeight, walls = null) {
         let dx = 0;
         let dy = 0;
 
@@ -36,6 +41,6 @@ export class Player extends Entity {
         // Convert to 60 FPS frames for consistent movement on different PCs.
         const frameScale = (typeof deltaTime === "number" && deltaTime > 0)
             ? Math.min(deltaTime / (1000 / 60), 3) : 1;
-        this.moveSmooth(dx, dy, canvasWidth, canvasHeight, frameScale);
+        this.moveSmooth(dx, dy, canvasWidth, canvasHeight, frameScale, walls);
     }
 }

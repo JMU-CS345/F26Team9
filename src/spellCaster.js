@@ -1,36 +1,40 @@
 import { DIRECTION_VECTORS, Projectile, LightningStrike, HealBurst } from "./spellEffects.js";
 
 // How far in front of the caster's center a spell appears.
-const CAST_OFFSET = 40;
+const CAST_OFFSET = 22;
 
 // How far lightning reaches from the caster.
-const LIGHTNING_RANGE = 240;
+const LIGHTNING_RANGE = 140;
 
 /**
  * Spell definitions keyed by inventory item id.
  * cooldown is in 60 FPS frames; create() returns the new effect.
+ * create() receives the walls (or null) so spells can stop where a wall is.
  */
 export const SPELLS = {
     fire_bolt: {
         cooldown: 30,
         create: (art, x, y, dir) => new Projectile(x, y, dir, {
             sheet: art.fireball, speed: 7, range: 520,
-            lightRadius: 150, lightColor: [1.0, 0.55, 0.2], sparkColor: [255, 170, 70],
-            wobble: { amplitude: 6, wavelength: 220 }
+            lightRadius: 85, lightColor: [1.0, 0.55, 0.2], sparkColor: [255, 170, 70],
+            wobble: { amplitude: 3, wavelength: 220 }
         })
     },
     ice_shard: {
         cooldown: 30,
         create: (art, x, y, dir) => new Projectile(x, y, dir, {
             sheet: art.iceball, speed: 8, range: 460,
-            lightRadius: 140, lightColor: [0.45, 0.75, 1.0], sparkColor: [140, 200, 255],
-            wobble: { amplitude: 4, wavelength: 240 }
+            lightRadius: 80, lightColor: [0.45, 0.75, 1.0], sparkColor: [140, 200, 255],
+            wobble: { amplitude: 2, wavelength: 240 }
         })
     },
     lightning: {
         cooldown: 60,
-        create: (art, x, y, dir) => new LightningStrike(
-            x, y, x + dir[0] * LIGHTNING_RANGE, y + dir[1] * LIGHTNING_RANGE, art.sparkle)
+        create: (art, x, y, dir, caster, walls) => {
+            // The bolt ends at the first wall in its path.
+            const reach = walls ? walls.castRay(x, y, dir, LIGHTNING_RANGE) : LIGHTNING_RANGE;
+            return new LightningStrike(x, y, x + dir[0] * reach, y + dir[1] * reach, art.sparkle);
+        }
     },
     heal_spell: {
         cooldown: 120,
@@ -47,6 +51,9 @@ export class SpellCaster {
         this.art = art;
         this.effects = [];
         this.cooldowns = {};
+
+        // Walls that stop spells; set by the game once the world exists.
+        this.walls = null;
     }
 
     /**
@@ -76,12 +83,41 @@ export class SpellCaster {
         if (!this.knows(id) || this.cooldownRemaining(id) > 0) return false;
 
         const dir = DIRECTION_VECTORS[caster.direction] || DIRECTION_VECTORS.south;
-        const x = caster.x + caster.size / 2 + dir[0] * CAST_OFFSET;
-        const y = caster.y + caster.size / 2 + dir[1] * CAST_OFFSET;
+        const [originX, originY] = this.castOrigin(caster);
 
-        this.effects.push(SPELLS[id].create(this.art, x, y, dir, caster));
+        // Never start a spell on the far side of a wall the caster is facing.
+        const offset = this.walls
+            ? this.walls.castRay(originX, originY, dir, CAST_OFFSET) : CAST_OFFSET;
+        const x = originX + dir[0] * offset;
+        const y = originY + dir[1] * offset;
+
+        this.effects.push(SPELLS[id].create(this.art, x, y, dir, caster, this.walls));
         this.cooldowns[id] = SPELLS[id].cooldown;
         return true;
+    }
+
+    /**
+     * Where a spell starts: the caster's center, unless that point is inside or
+     * past a wall. A caster's head may overlap a wall in front of it, so in that
+     * case the spell starts from the furthest clear point between the caster's
+     * feet (which never enter walls) and its center.
+     * @param {Entity} caster - Entity casting the spell.
+     * @returns {number[]} [x, y] in world pixels.
+     */
+    castOrigin(caster) {
+        const centerX = caster.x + caster.size / 2;
+        const centerY = caster.y + caster.size / 2;
+        if (!this.walls || !caster.getHitbox) return [centerX, centerY];
+
+        const feet = caster.getHitbox();
+        const feetX = feet.x + feet.w / 2;
+        const feetY = feet.y + feet.h / 2;
+        const length = Math.hypot(centerX - feetX, centerY - feetY);
+        if (length === 0) return [centerX, centerY];
+
+        const toCenter = [(centerX - feetX) / length, (centerY - feetY) / length];
+        const clear = this.walls.castRay(feetX, feetY, toCenter, length);
+        return [feetX + toCenter[0] * clear, feetY + toCenter[1] * clear];
     }
 
     /**
@@ -94,7 +130,7 @@ export class SpellCaster {
         for (const id of Object.keys(this.cooldowns)) {
             this.cooldowns[id] = Math.max(0, this.cooldowns[id] - frameScale);
         }
-        for (const effect of this.effects) effect.update(frameScale, w, h);
+        for (const effect of this.effects) effect.update(frameScale, w, h, this.walls);
         this.effects = this.effects.filter(effect => !effect.done);
     }
 

@@ -22,7 +22,7 @@ export class DeveloperMenu {
         // The values use the same 60 FPS frame units as Entity.moveSmooth().
         this.settings = [
             { key: "friction", label: "Ground Friction", min: 0.05, max: 0.90, step: 0.05, value: 0.25 },
-            { key: "speed", label: "Base Speed", min: 1, max: 8, step: 0.25, value: 3 },
+            { key: "speed", label: "Base Speed", min: 0.5, max: 8, step: 0.25, value: 2 },
             { key: "acceleration", label: "Acceleration", min: 0.10, max: 2, step: 0.05, value: 0.75 },
             { key: "animationDelay", label: "Walk Frame Delay", min: 3, max: 16, step: 1, value: 8 }
         ];
