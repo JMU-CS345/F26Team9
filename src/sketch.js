@@ -64,7 +64,7 @@ function preload() {
     };
     tileSheets = {
         floor: loadImage("src/assets/tiles/floor-tiles.png"),
-        wall: loadImage("src/assets/tiles/wall-tiles.png")
+        wall: loadImage("src/assets/tiles/wall_tiles_final.png")
     };
 }
 

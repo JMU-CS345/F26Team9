@@ -1,15 +1,12 @@
+import { WALL_SOURCE_TILE } from "./worldGenerator.js";
+
 /**
  * Solid wall shapes for a World, matching how the walls are drawn.
- * Each wall tile is a thin band through the tile's center with an arm reaching
- * toward each neighboring wall, so collisions line up with the visible wall
+ * Each wall tile is solid only where its wall pieces are opaque, so collisions
+ * line up with the visible wall (including the front face of a room's top wall)
  * instead of the whole tile. Model only: no drawing.
  */
 export class WallCollider {
-    // In wall-tiles.png the wall band covers pixels 9 to 15 of each 25-pixel tile.
-    static SOURCE_TILE = 25;
-    static BAND_START = 9;
-    static BAND_END = 16;
-
     /**
      * @param {World} world - World whose wall layer is solid.
      * @param {number} tileSize - Size of one tile in world pixels.
@@ -17,34 +14,25 @@ export class WallCollider {
     constructor(world, tileSize) {
         this.world = world;
         this.tileSize = tileSize;
-        const unit = tileSize / WallCollider.SOURCE_TILE;
-        this.bandStart = WallCollider.BAND_START * unit;
-        this.bandEnd = WallCollider.BAND_END * unit;
+        this.unit = tileSize / WALL_SOURCE_TILE;
     }
 
     /**
-     * The solid rectangles of one tile: the center square plus an arm toward
-     * each orthogonal neighbor that is also a wall.
+     * The solid rectangles of one tile: the opaque parts of each wall piece drawn there.
      * @param {number} col - Tile column.
      * @param {number} row - Tile row.
      * @returns {Object[]} Rectangles as {x, y, w, h} in world pixels; empty if not a wall.
      */
     solidRects(col, row) {
-        if (!this.world.isWall(col, row)) return [];
         const left = col * this.tileSize;
         const top = row * this.tileSize;
-        const size = this.tileSize;
-        const start = this.bandStart;
-        const end = this.bandEnd;
-        const band = end - start;
-        const mask = this.world.wallMask(col, row);
-
-        const rects = [{ x: left + start, y: top + start, w: band, h: band }];
-        if (mask & 1) rects.push({ x: left + start, y: top, w: band, h: start });
-        if (mask & 2) rects.push({ x: left + end, y: top + start, w: size - end, h: band });
-        if (mask & 4) rects.push({ x: left + start, y: top + end, w: band, h: size - end });
-        if (mask & 8) rects.push({ x: left, y: top + start, w: start, h: band });
-        return rects;
+        const unit = this.unit;
+        return this.world.wallPieces(col, row).flatMap(piece => piece.rects.map(rect => ({
+            x: left + rect.x * unit,
+            y: top + rect.y * unit,
+            w: rect.w * unit,
+            h: rect.h * unit
+        })));
     }
 
     /**

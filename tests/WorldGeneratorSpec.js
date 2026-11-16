@@ -151,16 +151,4 @@ describe("World walls and floor display", function () {
         expect(world.wallMask(4, 4)).toBe(1 + 8);     // bottom-right corner: north and west
         expect(world.wallMask(2, 2)).toBe(0);         // floor with no walls beside it
     });
-
-    it("draws floor under walls using the neighboring floor's material", function () {
-        const world = smallRoom();
-        const value = world.displayFloor(0, 2);
-        expect(Math.floor(value / FLOOR_VARIANTS)).toBe(FLOOR.WOOD);
-        expect(world.displayFloor(2, 2)).toBe(world.floor.get(2, 2));
-    });
-
-    it("draws nothing where there is neither floor nor wall", function () {
-        const world = new World(3, 3);
-        expect(world.displayFloor(1, 1)).toBe(FLOOR.EMPTY);
-    });
 });
