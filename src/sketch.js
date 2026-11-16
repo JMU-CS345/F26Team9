@@ -1,4 +1,6 @@
 import { Player } from "./player.js";
+import { ENEMY_SPRITE_PATH, createEnemySprites, createEnemyAttackSprites,
+    spawnEnemies } from "./enemy.js";
 import { Menu } from "./menu.js";
 import { Inventory } from "./inventory.js";
 import { InventoryMenu } from "./inventoryMenu.js";
@@ -20,6 +22,11 @@ let developerMenu;
 let inventory;
 let inventoryMenu;
 let playerSpriteSheet;
+let enemySpriteSheet;
+let enemySprites;
+let enemyAttackSprites;
+let enemies = [];
+let enemyAttacks = [];
 let lighting;
 let spellImages;
 let spellCaster;
@@ -57,6 +64,7 @@ const PLAYER_DIRECTIONS = [
 /** Loads character artwork before setup(). */
 function preload() {
     playerSpriteSheet = loadImage("src/assets/player/mage-walk-8dir.png");
+    enemySpriteSheet = loadImage(ENEMY_SPRITE_PATH);
     spellImages = {
         fireball: loadImage("src/assets/player/fireball.png"),
         iceball: loadImage("src/assets/player/fireball_blue.png"),
@@ -91,6 +99,11 @@ function setup() {
     noSmooth();
 
     player = new Player(0, 0, createPlayerSprites(playerSpriteSheet));
+    enemySprites = {};
+    enemyAttackSprites = createEnemyAttackSprites(enemySpriteSheet);
+    for (const type of ["skeleton", "goblin", "slime", "bat"]) {
+        enemySprites[type] = createEnemySprites(enemySpriteSheet, type);
+    }
     camera = new Camera(CAMERA_ZOOM);
     camera.setView(width, height);
     worldRenderer = new WorldRenderer(tileSheets.floor, tileSheets.wall, TILE_SIZE);
@@ -130,6 +143,8 @@ function createWorld() {
         player.stop();
     }
 
+    enemies = spawnEnemies(world, TILE_SIZE, enemySprites);
+    enemyAttacks = [];
     camera.setBounds(worldWidth(), worldHeight());
     camera.snapTo(player.x + player.size / 2, player.y + player.size / 2);
 }
@@ -191,6 +206,12 @@ function draw() {
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
         spellCaster.update(frameScale, worldWidth(), worldHeight());
+        for (const enemy of enemies) {
+            const attacks = enemy.update(player, world, TILE_SIZE, frameScale, enemies);
+            if (attacks) enemyAttacks.push(...(Array.isArray(attacks) ? attacks : [attacks]));
+        }
+        for (const attack of enemyAttacks) attack.update(player, world, TILE_SIZE, frameScale);
+        enemyAttacks = enemyAttacks.filter(attack => !attack.done);
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
         camera.follow(player.x + player.size / 2, player.y + player.size / 2, frameScale);
@@ -204,6 +225,8 @@ function draw() {
     push();
     camera.apply();
     worldRenderer.display();
+    for (const enemy of enemies) if (enemy.isAlive()) enemy.display();
+    for (const attack of enemyAttacks) attack.display(enemyAttackSprites[attack.kind]);
     player.display();
     pop();
 
