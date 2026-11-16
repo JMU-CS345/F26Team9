@@ -7,8 +7,40 @@ import { TileLayer } from "./tileLayer.js";
 export const FLOOR = { EMPTY: -1, BRICK: 0, COBBLE: 1, SLAB: 2, WOOD: 3 };
 export const FLOOR_VARIANTS = 8;
 
-/** Wall materials. Each one has 16 tiles in wall-tiles.png, one per neighbor combination. */
+/** Wall materials, matching the pairs of rows in wall_tiles_final.png. */
 export const WALL = { NONE: 0, STONE: 1, WOOD: 2 };
+
+// Size of one tile in the wall sheet, in pixels.
+export const WALL_SOURCE_TILE = 25;
+
+// Tiles per row in the wall sheet, and rows per material (stone, then wood).
+export const WALL_SHEET_COLS = 6;
+export const WALL_ROWS_PER_MATERIAL = 2;
+
+/**
+ * The pieces in each material's two rows of the sheet. `index` is the tile
+ * number within the material, read left to right; `rects` are the solid
+ * parts of the tile in sheet pixels, as {x, y, w, h}.
+ */
+export const WALL_PIECE = {
+    // Floor on one side: a straight wall along that edge.
+    SOUTH: { index: 0, rects: [{ x: 0, y: 6, w: 25, h: 19 }] },   // top edge plus front face
+    NORTH: { index: 1, rects: [{ x: 0, y: 0, w: 25, h: 8 }] },
+    WEST: { index: 2, rects: [{ x: 0, y: 0, w: 8, h: 25 }] },
+    EAST: { index: 3, rects: [{ x: 17, y: 0, w: 8, h: 25 }] },
+
+    // Floor only diagonally: the outer corner of a room.
+    SOUTH_WEST_CORNER: { index: 4, rects: [{ x: 0, y: 6, w: 8, h: 19 }] },
+    SOUTH_EAST_CORNER: { index: 5, rects: [{ x: 17, y: 6, w: 8, h: 19 }] },
+    NORTH_WEST_CORNER: { index: 6, rects: [{ x: 0, y: 0, w: 8, h: 8 }] },
+    NORTH_EAST_CORNER: { index: 7, rects: [{ x: 17, y: 0, w: 8, h: 8 }] },
+
+    // Floor on two neighboring sides: an inside corner.
+    SOUTH_WEST: { index: 8, rects: [{ x: 0, y: 0, w: 8, h: 6 }, { x: 0, y: 6, w: 25, h: 19 }] },
+    SOUTH_EAST: { index: 9, rects: [{ x: 17, y: 0, w: 8, h: 6 }, { x: 0, y: 6, w: 25, h: 19 }] },
+    NORTH_WEST: { index: 10, rects: [{ x: 0, y: 0, w: 25, h: 8 }, { x: 0, y: 8, w: 8, h: 17 }] },
+    NORTH_EAST: { index: 11, rects: [{ x: 0, y: 0, w: 25, h: 8 }, { x: 17, y: 8, w: 8, h: 17 }] }
+};
 
 // Materials a room can be built from. Corridors always use cobblestone.
 const ROOM_MATERIALS = [FLOOR.BRICK, FLOOR.SLAB, FLOOR.WOOD];
@@ -70,7 +102,6 @@ export class World {
 
     /**
      * Which orthogonal neighbors are also walls, as a bit mask: N=1, E=2, S=4, W=8.
-     * This picks the wall tile whose segments reach toward those neighbors.
      * @param {number} col - Tile column.
      * @param {number} row - Tile row.
      * @returns {number} Mask from 0 to 15.
@@ -83,21 +114,39 @@ export class World {
     }
 
     /**
-     * The floor tile to draw at a position. Wall tiles are thin and see-through
-     * around the edges, so a wall gets the floor of a neighboring tile under it.
+     * Picks the pieces of wall_tiles_final.png to draw for a wall tile, in drawing
+     * order: thin wall tops first and front faces last, so a face is never covered.
+     * Each wall hugs the edge of its tile that faces the floor next to it; a wall
+     * with floor below it (a room's top wall) shows a tall front face for depth.
      * @param {number} col - Tile column.
      * @param {number} row - Tile row.
-     * @returns {number} Floor value, or FLOOR.EMPTY if nothing should be drawn.
+     * @returns {Object[]} WALL_PIECE entries; empty if the tile is not a wall or touches no floor.
      */
-    displayFloor(col, row) {
-        if (this.isFloor(col, row)) return this.floor.get(col, row);
-        if (!this.isWall(col, row)) return FLOOR.EMPTY;
+    wallPieces(col, row) {
+        if (!this.isWall(col, row)) return [];
+        const floor = (dc, dr) => this.isFloor(col + dc, row + dr);
+        const north = floor(0, -1);
+        const east = floor(1, 0);
+        const south = floor(0, 1);
+        const west = floor(-1, 0);
 
-        const neighbor = this.findFloorNeighbor(col, row);
-        if (!neighbor) return FLOOR.EMPTY;
-        const material = Math.floor(this.floor.get(neighbor[0], neighbor[1]) / FLOOR_VARIANTS);
-        // A fixed variant per position, so the floor under walls does not change between draws.
-        return material * FLOOR_VARIANTS + ((col * 7 + row * 13) % FLOOR_VARIANTS);
+        const pieces = [];
+        // Outer corners only where neither side next to the diagonal already has a wall piece.
+        if (!north && !west && floor(-1, -1)) pieces.push(WALL_PIECE.NORTH_WEST_CORNER);
+        if (!north && !east && floor(1, -1)) pieces.push(WALL_PIECE.NORTH_EAST_CORNER);
+        if (!south && !west && floor(-1, 1)) pieces.push(WALL_PIECE.SOUTH_WEST_CORNER);
+        if (!south && !east && floor(1, 1)) pieces.push(WALL_PIECE.SOUTH_EAST_CORNER);
+
+        if (north && west) pieces.push(WALL_PIECE.NORTH_WEST);
+        if (north && east) pieces.push(WALL_PIECE.NORTH_EAST);
+        if (north && !west && !east) pieces.push(WALL_PIECE.NORTH);
+        if (west && !north && !south) pieces.push(WALL_PIECE.WEST);
+        if (east && !north && !south) pieces.push(WALL_PIECE.EAST);
+
+        if (south && west) pieces.push(WALL_PIECE.SOUTH_WEST);
+        if (south && east) pieces.push(WALL_PIECE.SOUTH_EAST);
+        if (south && !west && !east) pieces.push(WALL_PIECE.SOUTH);
+        return pieces;
     }
 
     /**
