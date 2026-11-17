@@ -1,4 +1,4 @@
-import { Player } from "./player.js";
+import { Player, StatBars } from "./player.js";
 import { Menu } from "./menu.js";
 import { Inventory } from "./inventory.js";
 import { InventoryMenu } from "./inventoryMenu.js";
@@ -30,6 +30,7 @@ let worldRenderer;
 let camera;
 let torches = [];
 let walls;
+let statBars;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
 
@@ -107,6 +108,7 @@ function setup() {
         sparkle: new SpriteSheet(spellImages.sparkle, 5, 2)
     });
     spellCaster.walls = walls;
+    statBars = new StatBars(player.stats);
 }
 
 /**
@@ -193,6 +195,8 @@ function draw() {
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
+        player.stats.update(frameScale);
+        statBars.update(frameScale);
         camera.follow(player.x + player.size / 2, player.y + player.size / 2, frameScale);
     } else {
         player.stop();
@@ -229,6 +233,9 @@ function draw() {
     textSize(13);
     text("Q: Settings    P: Dev    E: Inventory", 20, 55);
     pop();
+
+    statBars.display(20, 80);
+    statBars.displayHurtFlash();
 
     drawHotbar();
     if (hotkeyMessageFrames > 0) {
@@ -324,7 +331,9 @@ function keyPressed(event) {
             const item = inventory.getAssigned(pressedKey);
             if (item && spellCaster.knows(item.id)) {
                 if (!spellCaster.cast(item.id, player)) {
-                    hotkeyMessage = item.name + " is recharging";
+                    hotkeyMessage = spellCaster.cooldownRemaining(item.id) > 0
+                        ? item.name + " is recharging"
+                        : "Not enough mana for " + item.name;
                     hotkeyMessageFrames = 40;
                 }
                 return false;
