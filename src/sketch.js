@@ -32,6 +32,9 @@ let torches = [];
 let walls;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
+let selectedClass = null;
+let HP, ATK, DEF, MP;
+
 
 // The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
 const SPRITE_SIZE = 64;
@@ -53,6 +56,8 @@ const PLAYER_DIRECTIONS = [
     "south", "southeast", "east", "northeast",
     "north", "northwest", "west", "southwest"
 ];
+
+
 
 /** Loads character artwork before setup(). */
 function preload() {
@@ -181,9 +186,117 @@ function drawHotbar() {
     pop();
 }
 
+/** Displays primitive stats from the selected wizard class. */
+function drawWizardStats() {
+    push();
+    const x = 1050;
+    const y = 25;
+    fill(38, 34, 48, 220);
+    stroke(190, 160, 110);
+    strokeWeight(1);
+    noStroke();
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text("Mage Stats", x + 10, y + 8);
+    textSize(12);
+    if (selectedClass == "Fire") {
+        HP = 100;
+        MP = 30;
+        ATK = 50;
+        DEF = 10;
+        text("HP:" + HP, x + 10, y + 28);
+        text("MP: " + MP, x + 10, y + 48);
+        text("ATK: " + ATK, x + 10, y + 68);
+        text("DEF: " + DEF, x + 10, y + 88);
+    }
+
+    else if (selectedClass == "Mind") {
+        HP = 70;
+        MP = 50;
+        ATK = 70;
+        DEF = 7;
+        text("HP:" + HP, x + 10, y + 28);
+        text("MP: " + MP, x + 10, y + 48);
+        text("ATK: " + ATK, x + 10, y + 68);
+        text("DEF: " + DEF, x + 10, y + 88);
+    }
+
+    else if (selectedClass == "Earth") {
+        HP = 150;
+        MP = 30;
+        ATK = 50;
+        DEF = 20;
+        text("HP:" + HP, x + 10, y + 28);
+        text("MP: " + MP, x + 10, y + 48);
+        text("ATK: " + ATK, x + 10, y + 68);
+        text("DEF: " + DEF, x + 10, y + 88);
+    }
+    pop();
+}
+
+/** Draws a popup for choosing the player's class. */
+function drawClassSelectionPopup() {
+    const classes = ["Fire", "Mind", "Earth"];
+    const popupWidth = 340;
+    const popupHeight = 190;
+    const popupX = (width - popupWidth) / 2;
+    const popupY = (height - popupHeight) / 2;
+    const buttonWidth = 88;
+    const buttonGap = 12;
+    const buttonsWidth = classes.length * buttonWidth + (classes.length - 1) * buttonGap;
+    const buttonStartX = (width - buttonsWidth) / 2;
+
+    push();
+    noStroke();
+    fill(0, 0, 0, 175);
+    rect(0, 0, width, height);
+    fill(38, 34, 48);
+    stroke(190, 160, 110);
+    strokeWeight(2);
+    rect(popupX, popupY, popupWidth, popupHeight, 10);
+    noStroke();
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(22);
+    text("Choose Your Class", width / 2, popupY + 45);
+
+    textSize(15);
+    for (let i = 0; i < classes.length; i++) {
+        const x = buttonStartX + i * (buttonWidth + buttonGap);
+        const y = popupY + 105;
+        fill(78, 70, 92);
+        stroke(210);
+        strokeWeight(1);
+        rect(x, y, buttonWidth, 42, 5);
+        noStroke();
+        fill(255);
+        text(classes[i], x + buttonWidth / 2, y + 21);
+    }
+    pop();
+}
+
+/** Saves the class selected from the popup. */
+function mousePressed() {
+    if (selectedClass !== null) return;
+
+    const classes = ["Fire", "Mind", "Earth"];
+    const buttonWidth = 88;
+    const buttonGap = 12;
+    const buttonsWidth = classes.length * buttonWidth + (classes.length - 1) * buttonGap;
+    const buttonStartX = (width - buttonsWidth) / 2;
+    const buttonY = (height - 190) / 2 + 105;
+    const index = Math.floor((mouseX - buttonStartX) / (buttonWidth + buttonGap));
+    if (index >= 0 && index < classes.length
+        && mouseX <= buttonStartX + index * (buttonWidth + buttonGap) + buttonWidth
+        && mouseY >= buttonY && mouseY <= buttonY + 42) {
+        selectedClass = classes[index];
+    }
+}
+
 /** Main game loop; all menus freeze movement and momentum. */
 function draw() {
-    const paused = menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
+    const paused = selectedClass === null || menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
     if (!paused) {
         // Movement and spells are limited to the world, not the screen.
         player.handleInput(worldWidth(), worldHeight(), walls);
@@ -228,6 +341,8 @@ function draw() {
     text("MageQuest", 20, 20);
     textSize(13);
     text("Q: Settings    P: Dev    E: Inventory", 20, 55);
+    if (selectedClass === null) drawClassSelectionPopup();
+    drawWizardStats();
     pop();
 
     drawHotbar();
@@ -241,6 +356,8 @@ function draw() {
         pop();
         hotkeyMessageFrames--;
     }
+
+
 
     // Render only the currently open overlay; brightness affects them all.
     menu.display();
@@ -350,4 +467,4 @@ function windowResized() {
 
 // p5.js global mode finds these callbacks on window. Functions in a module are
 // not global, so expose them explicitly.
-Object.assign(window, { preload, setup, draw, keyPressed, windowResized });
+Object.assign(window, { preload, setup, draw, keyPressed, mousePressed, windowResized });
