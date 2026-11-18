@@ -96,6 +96,7 @@ export class Enemy extends Entity {
         this.random = stats.random ?? Math.random;
         // Stagger first throws so spawned skeletons do not all fire together.
         this.throwCooldown = 60 + this.random() * 60;
+        this.hopPause = 0; // Slimes briefly rest after each completed hop.
         this.placeholderColor = [180, 60, 60];
     }
 
@@ -104,6 +105,11 @@ export class Enemy extends Entity {
         if (!this.isAlive()) return;
         const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 1;
         if (time === 0) return;
+        if (this.type === "slime" && this.hopPause > 0) {
+            this.hopPause = Math.max(0, this.hopPause - time);
+            this.updateAnimation(false, time);
+            return;
+        }
 
         if (!this.wanderTarget) {
             const col = Math.floor((this.x + this.size / 2) / tileSize);
@@ -149,7 +155,10 @@ export class Enemy extends Entity {
         this.y = y;
         this.updateDirection(dx, dy);
         this.updateAnimation(true, time);
-        if (step === distance) this.wanderTarget = null;
+        if (step === distance) {
+            this.wanderTarget = null;
+            return true; // Reached the next tile: a slime has landed.
+        }
     }
 
     /** Throw a sword toward the player every two seconds while in range. */
@@ -170,6 +179,29 @@ export class Enemy extends Entity {
         projectiles.push(new EnemyProjectile(x, y, dx, dy, "sword", this.damage));
         this.throwCooldown = 120; // Two seconds at 60 FPS.
         this.updateDirection(dx, dy);
+    }
+
+    /** Two bouncing slime balls spread toward the player on each landing. */
+    updateSlimeAttack(player, projectiles, landed) {
+        if (this.type !== "slime" || !this.isAlive() || !landed) return;
+        this.hopPause = 45;
+        const x = this.x + this.size / 2;
+        const y = this.y + this.size / 2;
+        const angle = Math.atan2(player.y + player.size / 2 - y,
+            player.x + player.size / 2 - x);
+        for (const spread of [-0.45, 0.45]) {
+            projectiles.push(new EnemyProjectile(x, y,
+                Math.cos(angle + spread), Math.sin(angle + spread), "slime", this.damage));
+        }
+    }
+
+    /** Use the existing lifted slime sprite while hopping. */
+    getCurrentSprite() {
+        const frames = this.sprites[this.direction];
+        if (this.type === "slime" && this.isMoving && Array.isArray(frames) && frames[2]) {
+            return frames[2];
+        }
+        return super.getCurrentSprite();
     }
 
     /** Lowers health without allowing it to go below zero. */

@@ -30,8 +30,17 @@ export class EnemyProjectile {
         return walls.hits({ x: x - r, y: y - r, w: 2 * r, h: 2 * r }).length > 0;
     }
 
+    /** Aim at the character's body, not the feet-only wall hitbox. */
+    hitsPlayer(player) {
+        if (!player || !player.stats.isAlive()) return false;
+        const centerX = player.x + player.size / 2;
+        const centerY = player.y + player.size / 2;
+        return Math.hypot(this.x - centerX, this.y - centerY)
+            <= this.radius + player.size * 0.35;
+    }
+
     /** Small substeps prevent fast throws from passing through thin walls. */
-    update(frameScale, walls, world, tileSize) {
+    update(frameScale, walls, world, tileSize, player = null) {
         if (this.done) return;
         const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 1;
         if (!time) return;
@@ -57,6 +66,10 @@ export class EnemyProjectile {
             } else {
                 this.x = nextX;
                 this.y = nextY;
+                if (this.hitsPlayer(player)) {
+                    player.takeDamage(this.damage);
+                    this.done = true; // Only one hit per projectile.
+                }
             }
             this.distance += step;
             if (this.kind !== "slime" && this.distance >= 220) this.done = true;
