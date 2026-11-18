@@ -7,6 +7,11 @@ import { LightingRenderer } from "./lightingRenderer.js";
 import { SpellCaster } from "./spellCaster.js";
 import { SpriteSheet } from "./spellEffects.js";
 import { LightOrb } from "./lightOrb.js";
+import { createRandom, generateWorld } from "./worldGenerator.js";
+import { WorldRenderer } from "./worldRenderer.js";
+import { Camera } from "./camera.js";
+import { Torch } from "./torch.js";
+import { WallCollider } from "./wallCollider.js";
 
 // Objects used throughout the game.
 let player;
@@ -19,16 +24,40 @@ let lighting;
 let spellImages;
 let spellCaster;
 let lightOrb;
+let tileSheets;
+let world;
+let worldRenderer;
+let camera;
+let torches = [];
+let walls;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
+let selectedClass = null;
+let HP, ATK, DEF, MP;
+
 
 // The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
 const SPRITE_SIZE = 64;
+
+// Size of one world tile in world pixels; the tile art is 25 x 25.
+const TILE_SIZE = 25;
+
+// World size in tiles. Larger than the screen; the camera follows the player.
+const WORLD_COLS = 64;
+const WORLD_ROWS = 40;
+
+// Screen pixels per world pixel. A whole number keeps the pixel art crisp.
+const CAMERA_ZOOM = 3;
+
+// Shown behind the world where there are no tiles.
+const VOID_COLOR = [16, 14, 18];
 
 const PLAYER_DIRECTIONS = [
     "south", "southeast", "east", "northeast",
     "north", "northwest", "west", "southwest"
 ];
+
+
 
 /** Loads character artwork before setup(). */
 function preload() {
@@ -37,6 +66,10 @@ function preload() {
         fireball: loadImage("src/assets/player/fireball.png"),
         iceball: loadImage("src/assets/player/fireball_blue.png"),
         sparkle: loadImage("src/assets/player/flash01.png")
+    };
+    tileSheets = {
+        floor: loadImage("src/assets/tiles/floor-tiles.png"),
+        wall: loadImage("src/assets/tiles/wall_tiles_final.png")
     };
 }
 
@@ -62,7 +95,11 @@ function setup() {
     createCanvas(windowWidth, windowHeight);
     noSmooth();
 
-    player = new Player(width / 2, height / 2, createPlayerSprites(playerSpriteSheet));
+    player = new Player(0, 0, createPlayerSprites(playerSpriteSheet));
+    camera = new Camera(CAMERA_ZOOM);
+    camera.setView(width, height);
+    worldRenderer = new WorldRenderer(tileSheets.floor, tileSheets.wall, TILE_SIZE);
+    createWorld();
     lightOrb = new LightOrb(player.x, player.y);
     menu = new Menu();
     inventory = new Inventory();
@@ -74,6 +111,42 @@ function setup() {
         iceball: new SpriteSheet(spellImages.iceball, 4, 10),
         sparkle: new SpriteSheet(spellImages.sparkle, 5, 2)
     });
+    spellCaster.walls = walls;
+}
+
+/**
+ * Generates a new world, moves the player to the middle of the starting room,
+ * and points the camera at them.
+ */
+function createWorld() {
+    // A new seed every time, so each run gets a different layout.
+    world = generateWorld(WORLD_COLS, WORLD_ROWS, createRandom(Date.now()), { maxRooms: 14 });
+    worldRenderer.build(world, 0, 0);
+    walls = new WallCollider(world, TILE_SIZE);
+
+    // Each torch hangs just below the wall line of its tile, flickering out of sync.
+    torches = world.torches.map(({ col, row }, i) =>
+        new Torch((col + 0.5) * TILE_SIZE, (row + 0.5) * TILE_SIZE + 10, i * 37));
+
+    if (world.start) {
+        const [col, row] = world.start;
+        player.x = (col + 0.5) * TILE_SIZE - player.size / 2;
+        player.y = (row + 0.5) * TILE_SIZE - player.size / 2;
+        player.stop();
+    }
+
+    camera.setBounds(worldWidth(), worldHeight());
+    camera.snapTo(player.x + player.size / 2, player.y + player.size / 2);
+}
+
+/** @returns {number} World width in world pixels. */
+function worldWidth() {
+    return world.cols * TILE_SIZE;
+}
+
+/** @returns {number} World height in world pixels. */
+function worldHeight() {
+    return world.rows * TILE_SIZE;
 }
 
 /** Draws the four assigned hotkeys during gameplay. */
@@ -113,27 +186,151 @@ function drawHotbar() {
     pop();
 }
 
+/** Displays primitive stats from the selected wizard class. */
+function drawWizardStats() {
+    push();
+    const x = 1050;
+    const y = 25;
+    fill(38, 34, 48, 220);
+    stroke(190, 160, 110);
+    strokeWeight(1);
+    noStroke();
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(14);
+    text("Mage Stats", x + 10, y + 8);
+    textSize(12);
+    if (selectedClass == "Fire") {
+        HP = 100;
+        MP = 30;
+        ATK = 50;
+        DEF = 10;
+        text("HP:" + HP, x + 10, y + 28);
+        text("MP: " + MP, x + 10, y + 48);
+        text("ATK: " + ATK, x + 10, y + 68);
+        text("DEF: " + DEF, x + 10, y + 88);
+    }
+
+    else if (selectedClass == "Mind") {
+        HP = 70;
+        MP = 50;
+        ATK = 70;
+        DEF = 7;
+        text("HP:" + HP, x + 10, y + 28);
+        text("MP: " + MP, x + 10, y + 48);
+        text("ATK: " + ATK, x + 10, y + 68);
+        text("DEF: " + DEF, x + 10, y + 88);
+    }
+
+    else if (selectedClass == "Earth") {
+        HP = 150;
+        MP = 30;
+        ATK = 50;
+        DEF = 20;
+        text("HP:" + HP, x + 10, y + 28);
+        text("MP: " + MP, x + 10, y + 48);
+        text("ATK: " + ATK, x + 10, y + 68);
+        text("DEF: " + DEF, x + 10, y + 88);
+    }
+    pop();
+}
+
+/** Draws a popup for choosing the player's class. */
+function drawClassSelectionPopup() {
+    const classes = ["Fire", "Mind", "Earth"];
+    const popupWidth = 340;
+    const popupHeight = 190;
+    const popupX = (width - popupWidth) / 2;
+    const popupY = (height - popupHeight) / 2;
+    const buttonWidth = 88;
+    const buttonGap = 12;
+    const buttonsWidth = classes.length * buttonWidth + (classes.length - 1) * buttonGap;
+    const buttonStartX = (width - buttonsWidth) / 2;
+
+    push();
+    noStroke();
+    fill(0, 0, 0, 175);
+    rect(0, 0, width, height);
+    fill(38, 34, 48);
+    stroke(190, 160, 110);
+    strokeWeight(2);
+    rect(popupX, popupY, popupWidth, popupHeight, 10);
+    noStroke();
+    fill(255);
+    textAlign(CENTER, CENTER);
+    textSize(22);
+    text("Choose Your Class", width / 2, popupY + 45);
+
+    textSize(15);
+    for (let i = 0; i < classes.length; i++) {
+        const x = buttonStartX + i * (buttonWidth + buttonGap);
+        const y = popupY + 105;
+        fill(78, 70, 92);
+        stroke(210);
+        strokeWeight(1);
+        rect(x, y, buttonWidth, 42, 5);
+        noStroke();
+        fill(255);
+        text(classes[i], x + buttonWidth / 2, y + 21);
+    }
+    pop();
+}
+
+/** Saves the class selected from the popup. */
+function mousePressed() {
+    if (selectedClass !== null) return;
+
+    const classes = ["Fire", "Mind", "Earth"];
+    const buttonWidth = 88;
+    const buttonGap = 12;
+    const buttonsWidth = classes.length * buttonWidth + (classes.length - 1) * buttonGap;
+    const buttonStartX = (width - buttonsWidth) / 2;
+    const buttonY = (height - 190) / 2 + 105;
+    const index = Math.floor((mouseX - buttonStartX) / (buttonWidth + buttonGap));
+    if (index >= 0 && index < classes.length
+        && mouseX <= buttonStartX + index * (buttonWidth + buttonGap) + buttonWidth
+        && mouseY >= buttonY && mouseY <= buttonY + 42) {
+        selectedClass = classes[index];
+    }
+}
+
 /** Main game loop; all menus freeze movement and momentum. */
 function draw() {
-    background(220);
-    const paused = menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
+    const paused = selectedClass === null || menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
     if (!paused) {
-        player.handleInput(width, height);
+        // Movement and spells are limited to the world, not the screen.
+        player.handleInput(worldWidth(), worldHeight(), walls);
 
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
-        spellCaster.update(frameScale, width, height);
+        spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
+        for (const torch of torches) torch.update(frameScale);
+        camera.follow(player.x + player.size / 2, player.y + player.size / 2, frameScale);
     } else {
         player.stop();
     }
-    player.display();
 
-    lighting.display(getLights(), millis() / 1000);
+    background(...VOID_COLOR);
+
+    // The world and player are drawn through the camera, in world pixels.
+    push();
+    camera.apply();
+    worldRenderer.display();
+    player.display();
+    pop();
+
+    lighting.display(getLights(), millis() / 1000, camera.scroll);
 
     // Spells and the orb glow, so draw them after lighting where darkness cannot dim them.
+    push();
+    camera.apply();
+    for (const torch of torches) torch.display();
     spellCaster.display();
     lightOrb.display();
+    pop();
+
+    // The HUD and menus below are drawn in screen pixels, outside the camera.
 
     // Light text so the HUD stays readable over the dark ambient lighting.
     push();
@@ -144,6 +341,8 @@ function draw() {
     text("MageQuest", 20, 20);
     textSize(13);
     text("Q: Settings    P: Dev    E: Inventory", 20, 55);
+    if (selectedClass === null) drawClassSelectionPopup();
+    drawWizardStats();
     pop();
 
     drawHotbar();
@@ -158,6 +357,8 @@ function draw() {
         hotkeyMessageFrames--;
     }
 
+
+
     // Render only the currently open overlay; brightness affects them all.
     menu.display();
     developerMenu.display();
@@ -166,11 +367,28 @@ function draw() {
 }
 
 /**
- * Lists the lights for the current frame: the light orb plus every active spell.
- * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]}.
+ * Lists the lights for the current frame: the light orb, every active spell, and
+ * the torches that light up part of the screen. The shader takes a limited number
+ * of lights, so torches come last and the closest ones are listed first.
+ * Lights are kept in world pixels and converted to the screen for the lighting pass.
+ * @returns {Object[]} Lights as {x, y, radius, color: [r, g, b]} in screen pixels.
  */
 function getLights() {
-    return [...lightOrb.getLights(), ...spellCaster.getLights()];
+    const toScreen = light => {
+        const [x, y] = camera.toScreen(light.x, light.y);
+        return { x, y, radius: light.radius * camera.zoom, color: light.color };
+    };
+    const onScreen = light => light.x + light.radius > 0 && light.x - light.radius < width
+        && light.y + light.radius > 0 && light.y - light.radius < height;
+    const distanceToCenter = light => Math.hypot(light.x - width / 2, light.y - height / 2);
+
+    const torchLights = torches.flatMap(torch => torch.getLights())
+        .map(toScreen)
+        .filter(onScreen)
+        .sort((a, b) => distanceToCenter(a) - distanceToCenter(b));
+
+    return [...lightOrb.getLights(), ...spellCaster.getLights()].map(toScreen)
+        .concat(torchLights);
 }
 
 /**
@@ -243,9 +461,10 @@ function keyPressed(event) {
  */
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+    camera.setView(width, height);
     lighting.resize(width, height);
 }
 
 // p5.js global mode finds these callbacks on window. Functions in a module are
 // not global, so expose them explicitly.
-Object.assign(window, { preload, setup, draw, keyPressed, windowResized });
+Object.assign(window, { preload, setup, draw, keyPressed, mousePressed, windowResized });

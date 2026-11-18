@@ -37,6 +37,7 @@ varying vec2 vTexCoord;
 
 uniform vec2 uResolution;
 uniform float uTime;
+uniform vec2 uScroll;     // camera offset, so motes stay put in the world
 uniform vec3 uAmbient;   // color where no light reaches
 uniform vec3 uLightTint; // multiplied into every light
 uniform int uPass;
@@ -106,7 +107,7 @@ void main() {
         // Motes are faint in the dark and bright near a light.
         vec3 lit = uAmbient + light;
         float brightness = clamp(max(lit.r, max(lit.g, lit.b)), 0.0, 1.0);
-        vec3 moteColor = vec3(1.0, 0.9, 0.65) * motes(pos) * (0.2 + 0.8 * brightness);
+        vec3 moteColor = vec3(1.0, 0.9, 0.65) * motes(pos + uScroll) * (0.2 + 0.8 * brightness);
         vec3 glow = light * 0.12;
         gl_FragColor = vec4(dither(moteColor + glow), 1.0);
     }
