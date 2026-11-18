@@ -1,7 +1,9 @@
 import { Entity } from "../src/entity.js";
-import { Player } from "../src/player.js";
+import { Player, PlayerStats, StatBars } from "../src/player.js";
 import { DeveloperMenu } from "../src/developerMenu.js";
 import { createPlayerSprites } from "../src/sketch.js";
+import { SpellCaster } from "../src/spellCaster.js";
+import { Inventory, ITEM_CATALOG } from "../src/inventory.js";
 
 /**
  * Jasmine tests for MageQuest's shared movement and facing logic.
@@ -602,5 +604,176 @@ describe("Developer menu settings", function () {
         const { player, developer } = makeMenu();
         developer.handleInput("d");
         expect(player.friction).toBe(0.25);
+    });
+});
+
+/** Jasmine unit tests for player stats and the stat bars that show them. */
+describe("Player stats", function () {
+    describe("PlayerStats", function () {
+        it("starts with full health and mana at level 1", function () {
+            const stats = new PlayerStats();
+            expect(stats.health).toBe(stats.maxHealth);
+            expect(stats.mana).toBe(stats.maxMana);
+            expect(stats.level).toBe(1);
+            expect(stats.experience).toBe(0);
+        });
+
+        it("lowers health when taking damage, never below zero", function () {
+            const stats = new PlayerStats({ maxHealth: 100 });
+            stats.takeDamage(30);
+            expect(stats.health).toBe(70);
+            stats.takeDamage(500);
+            expect(stats.health).toBe(0);
+            expect(stats.isAlive()).toBe(false);
+        });
+
+        it("ignores negative damage and heals no higher than the maximum", function () {
+            const stats = new PlayerStats({ maxHealth: 100 });
+            stats.takeDamage(-20);
+            expect(stats.health).toBe(100);
+            stats.takeDamage(50);
+            stats.heal(80);
+            expect(stats.health).toBe(100);
+        });
+
+        it("spends mana only when there is enough", function () {
+            const stats = new PlayerStats({ maxMana: 20 });
+            expect(stats.spendMana(15)).toBe(true);
+            expect(stats.mana).toBe(5);
+            expect(stats.spendMana(10)).toBe(false);
+            expect(stats.mana).toBe(5);
+        });
+
+        it("regenerates mana over time up to the maximum", function () {
+            const stats = new PlayerStats({ maxMana: 20 });
+            stats.spendMana(20);
+            stats.update(60);
+            expect(stats.mana).toBeCloseTo(PlayerStats.MANA_REGEN * 60);
+            stats.update(100000);
+            expect(stats.mana).toBe(20);
+        });
+
+        it("levels up when experience fills the bar, carrying the rest over", function () {
+            const stats = new PlayerStats({ maxHealth: 100, maxMana: 50 });
+            stats.takeDamage(40);
+            expect(stats.gainExperience(130)).toBe(1);
+            expect(stats.level).toBe(2);
+            expect(stats.experience).toBe(30);
+            expect(stats.maxHealth).toBe(110);
+            expect(stats.health).toBe(110);
+            expect(stats.maxMana).toBe(60);
+        });
+
+        it("can gain several levels at once", function () {
+            const stats = new PlayerStats();
+            // 100 for level 2, then 200 for level 3.
+            expect(stats.gainExperience(310)).toBe(2);
+            expect(stats.level).toBe(3);
+            expect(stats.experience).toBe(10);
+        });
+    });
+
+    describe("StatBars", function () {
+        it("shows how full each bar is", function () {
+            const stats = new PlayerStats({ maxHealth: 100, maxMana: 50 });
+            const bars = new StatBars(stats);
+            stats.takeDamage(25);
+            stats.spendMana(10);
+            stats.gainExperience(50);
+            expect(bars.fraction("health")).toBe(0.75);
+            expect(bars.fraction("mana")).toBe(0.8);
+            expect(bars.fraction("experience")).toBe(0.5);
+            expect(bars.valueText("health")).toBe("75 / 100");
+            expect(bars.valueText("experience")).toBe("Lv 1   50 / 100");
+        });
+
+        it("leaves a trail after a hit that drains toward the new health", function () {
+            const stats = new PlayerStats({ maxHealth: 100 });
+            const bars = new StatBars(stats);
+            stats.takeDamage(50);
+            bars.update(1);
+            expect(bars.trails.health).toBeGreaterThan(0.5);
+            for (let i = 0; i < 300; i++) bars.update(1);
+            expect(bars.trails.health).toBeCloseTo(0.5, 2);
+        });
+
+        it("flashes when health drops, then fades", function () {
+            const stats = new PlayerStats();
+            const bars = new StatBars(stats);
+            bars.update(1);
+            expect(bars.hurt).toBe(0);
+            stats.takeDamage(10);
+            bars.update(1);
+            expect(bars.hurt).toBe(1);
+            for (let i = 0; i < StatBars.HURT_TIME; i++) bars.update(1);
+            expect(bars.hurt).toBe(0);
+        });
+
+        it("does not flash or leave a trail when healing", function () {
+            const stats = new PlayerStats();
+            stats.takeDamage(50);
+            const bars = new StatBars(stats);
+            stats.heal(30);
+            bars.update(1);
+            expect(bars.hurt).toBe(0);
+            expect(bars.trails.health).toBe(0.8);
+        });
+
+        it("does not show a level up as lost experience", function () {
+            const stats = new PlayerStats();
+            stats.gainExperience(90);
+            const bars = new StatBars(stats);
+            stats.gainExperience(20);
+            bars.update(1);
+            expect(bars.trails.experience).toBe(bars.fraction("experience"));
+        });
+    });
+
+    describe("in the game", function () {
+        const art = { fireball: {}, iceball: {}, sparkle: {} };
+
+        it("lowers the player's health when the player takes damage", function () {
+            const player = new Player(0, 0);
+            player.takeDamage(20);
+            expect(player.stats.health).toBe(player.stats.maxHealth - 20);
+        });
+
+        it("spends mana to cast a spell and refuses when there is not enough", function () {
+            const player = new Player(0, 0);
+            const spells = new SpellCaster(art);
+            const before = player.stats.mana;
+            expect(spells.cast("fire_bolt", player)).toBe(true);
+            expect(player.stats.mana).toBeLessThan(before);
+
+            player.stats.spendMana(player.stats.mana);
+            expect(spells.cast("ice_shard", player)).toBe(false);
+            expect(spells.effects.length).toBe(1);
+        });
+
+        it("restores health with the heal spell", function () {
+            const player = new Player(0, 0);
+            player.takeDamage(50);
+            new SpellCaster(art).cast("heal_spell", player);
+            expect(player.stats.health).toBeGreaterThan(player.stats.maxHealth - 50);
+        });
+
+        it("lets the developer menu hit the player and add experience", function () {
+            const data = {};
+            const storage = { getItem: k => data[k] || null, setItem: (k, v) => { data[k] = v; } };
+            const player = new Player(0, 0);
+            const menu = new DeveloperMenu(player, { getTextSize: () => 18 }, storage,
+                new Inventory(storage));
+            menu.toggle();
+            const healthRow = menu.settings.length + ITEM_CATALOG.length;
+            for (let i = 0; i < healthRow; i++) menu.handleInput("s");
+
+            menu.handleInput("a");
+            expect(player.stats.health).toBe(player.stats.maxHealth - 15);
+
+            menu.handleInput("s");
+            menu.handleInput("s");
+            for (let i = 0; i < 4; i++) menu.handleInput("d");
+            expect(player.stats.level).toBe(2);
+        });
     });
 });

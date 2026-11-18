@@ -27,8 +27,33 @@ export class DeveloperMenu {
             { key: "animationDelay", label: "Walk Frame Delay", min: 3, max: 16, step: 1, value: 8 }
         ];
 
+        // Test controls for the stat bars, until enemies can deal damage.
+        // A/D calls change(-1) or change(1).
+        const stats = player.stats;
+        this.statRows = stats ? [
+            { label: "Health (A: hit 15)", color: [205, 55, 65],
+                value: () => Math.ceil(stats.health) + "/" + stats.maxHealth,
+                change: dir => dir < 0 ? player.takeDamage(15) : stats.heal(15) },
+            { label: "Mana (A: use 10)", color: [65, 110, 230],
+                value: () => Math.floor(stats.mana) + "/" + stats.maxMana,
+                change: dir => dir < 0 ? stats.spendMana(Math.min(10, stats.mana)) : stats.restoreMana(10) },
+            { label: "XP (D: +25)", color: [225, 185, 60],
+                value: () => "Lv " + stats.level,
+                change: dir => { if (dir > 0) stats.gainExperience(25); } }
+        ] : [];
+
         this.loadSettings();
         this.applySettings();
+    }
+
+    /** @returns {number} Inventory rows shown after the movement settings. */
+    get itemRowCount() {
+        return this.inventory ? ITEM_CATALOG.length : 0;
+    }
+
+    /** @returns {number} Total rows: movement settings, then items, then stats. */
+    get rowCount() {
+        return this.settings.length + this.itemRowCount + this.statRows.length;
     }
 
     /** Opens or closes the developer menu. Saves values when closing. */
@@ -50,8 +75,7 @@ export class DeveloperMenu {
         if (pressedKey === "w") {
             this.selectedSetting = Math.max(0, this.selectedSetting - 1);
         } else if (pressedKey === "s") {
-            const total = this.settings.length + (this.inventory ? ITEM_CATALOG.length : 0);
-            this.selectedSetting = Math.min(total - 1, this.selectedSetting + 1);
+            this.selectedSetting = Math.min(this.rowCount - 1, this.selectedSetting + 1);
         } else if (pressedKey === "a") {
             this.changeSetting(-1);
         } else if (pressedKey === "d") {
@@ -64,8 +88,12 @@ export class DeveloperMenu {
      * @param {number} direction - Negative to decrease, positive to increase.
      */
     changeSetting(direction) {
+        const statIndex = this.selectedSetting - this.settings.length - this.itemRowCount;
+        if (statIndex >= 0) {
+            this.statRows[statIndex].change(direction);
+            return;
+        }
         if (this.selectedSetting >= this.settings.length) {
-            if (!this.inventory) return;
             const item = ITEM_CATALOG[this.selectedSetting - this.settings.length];
             this.inventory.setQuantity(item.id, this.inventory.getQuantity(item.id) + direction);
             return;
@@ -153,7 +181,7 @@ export class DeveloperMenu {
         if (!this.isOpen) return;
         push();
         const fontSize = this.menu.getTextSize();
-        const rows = this.settings.length + (this.inventory ? ITEM_CATALOG.length : 0);
+        const rows = this.rowCount;
         const visibleRows = 6;
         const start = Math.min(Math.max(0, this.selectedSetting - visibleRows + 1),
                                Math.max(0, rows - visibleRows));
@@ -172,7 +200,7 @@ export class DeveloperMenu {
         textSize(Math.min(fontSize + 8, 28));
         text("Developer Settings", width / 2, height / 2 - 220);
         textSize(14);
-        text("Movement + Inventory Test Items", width / 2, height / 2 - 190);
+        text("Movement + Inventory Test Items + Player Stats", width / 2, height / 2 - 190);
 
         for (let visible = 0; visible < visibleRows; visible++) {
             const index = start + visible;
@@ -192,6 +220,15 @@ export class DeveloperMenu {
                 const setting = this.settings[index];
                 text(setting.label + ":", width / 2 - 240, y);
                 this.drawSlider(setting, width / 2 - 30, y);
+            } else if (index >= this.settings.length + this.itemRowCount) {
+                const row = this.statRows[index - this.settings.length - this.itemRowCount];
+                text(row.label + ":", width / 2 - 240, y);
+                fill(...row.color);
+                rect(width / 2 + 90, y - 11, 22, 22, 4);
+                fill(255);
+                textAlign(CENTER, CENTER);
+                textSize(16);
+                text(row.value(), width / 2 + 180, y);
             } else {
                 const item = ITEM_CATALOG[index - this.settings.length];
                 text(item.name + " (" + item.type + "):", width / 2 - 240, y);
