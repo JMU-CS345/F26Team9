@@ -3,17 +3,22 @@ import { DIRECTION_VECTORS, Projectile, LightningStrike, HealBurst } from "./spe
 // How far in front of the caster's center a spell appears.
 const CAST_OFFSET = 22;
 
+// Health restored by the heal spell.
+const HEAL_AMOUNT = 30;
+
 // How far lightning reaches from the caster.
 const LIGHTNING_RANGE = 140;
 
 /**
  * Spell definitions keyed by inventory item id.
- * cooldown is in 60 FPS frames; create() returns the new effect.
+ * cooldown is in 60 FPS frames; manaCost is taken from the caster's stats, if it
+ * has any; create() returns the new effect.
  * create() receives the walls (or null) so spells can stop where a wall is.
  */
 export const SPELLS = {
     fire_bolt: {
         cooldown: 30,
+        manaCost: 8,
         create: (art, x, y, dir) => new Projectile(x, y, dir, {
             sheet: art.fireball, speed: 7, range: 520,
             lightRadius: 85, lightColor: [1.0, 0.55, 0.2], sparkColor: [255, 170, 70],
@@ -22,6 +27,7 @@ export const SPELLS = {
     },
     ice_shard: {
         cooldown: 30,
+        manaCost: 8,
         create: (art, x, y, dir) => new Projectile(x, y, dir, {
             sheet: art.iceball, speed: 8, range: 460,
             lightRadius: 80, lightColor: [0.45, 0.75, 1.0], sparkColor: [140, 200, 255],
@@ -30,6 +36,7 @@ export const SPELLS = {
     },
     lightning: {
         cooldown: 60,
+        manaCost: 15,
         create: (art, x, y, dir, caster, walls) => {
             // The bolt ends at the first wall in its path.
             const reach = walls ? walls.castRay(x, y, dir, LIGHTNING_RANGE) : LIGHTNING_RANGE;
@@ -38,7 +45,11 @@ export const SPELLS = {
     },
     heal_spell: {
         cooldown: 120,
-        create: (art, x, y, dir, caster) => new HealBurst(caster, art.sparkle)
+        manaCost: 20,
+        create: (art, x, y, dir, caster) => {
+            if (caster.stats) caster.stats.heal(HEAL_AMOUNT);
+            return new HealBurst(caster, art.sparkle);
+        }
     }
 };
 
@@ -77,10 +88,13 @@ export class SpellCaster {
      * Casts a spell from the caster's center in the direction it faces.
      * @param {string} id - Spell id.
      * @param {Entity} caster - Entity casting the spell.
-     * @returns {boolean} True if the spell was cast; false if unknown or recharging.
+     * @returns {boolean} True if the spell was cast; false if unknown, recharging,
+     *   or the caster does not have enough mana.
      */
     cast(id, caster) {
         if (!this.knows(id) || this.cooldownRemaining(id) > 0) return false;
+        const cost = SPELLS[id].manaCost || 0;
+        if (caster.stats && !caster.stats.spendMana(cost)) return false;
 
         const dir = DIRECTION_VECTORS[caster.direction] || DIRECTION_VECTORS.south;
         const [originX, originY] = this.castOrigin(caster);
