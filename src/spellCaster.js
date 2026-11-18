@@ -140,11 +140,17 @@ export class SpellCaster {
      * @param {number} w - Canvas width.
      * @param {number} h - Canvas height.
      */
-    update(frameScale, w, h, enemies = []) {
+    update(frameScale, w, h, enemies = [], onDefeat = null) {
         for (const id of Object.keys(this.cooldowns)) {
             this.cooldowns[id] = Math.max(0, this.cooldowns[id] - frameScale);
         }
-        for (const effect of this.effects) effect.update(frameScale, w, h, this.walls, enemies);
+        for (const effect of this.effects) {
+            effect.update(frameScale, w, h, this.walls, enemies);
+            if (onDefeat && effect.defeatedEnemy) {
+                onDefeat(effect.defeatedEnemy);
+                effect.defeatedEnemy = null; // Never drop XP twice for one kill.
+            }
+        }
         this.effects = this.effects.filter(effect => !effect.done);
     }
 

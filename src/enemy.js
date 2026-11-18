@@ -75,7 +75,7 @@ export function spawnEnemies(world, tileSize, spritesByType, random = Math.rando
         const speed = 0.85 + 0.3 * random();
         enemies.push(new Enemy((col + 0.5) * tileSize - SPRITE_SIZE / 2,
             (row + 0.5) * tileSize - SPRITE_SIZE / 2,
-            spritesByType[type] || {}, { type, speed, random, health: 3 + i % 3 }));
+            spritesByType[type] || {}, { type, speed, random, health: 2 }));
     }
     return enemies;
 }

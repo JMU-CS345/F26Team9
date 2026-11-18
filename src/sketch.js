@@ -8,6 +8,7 @@ import { LightingRenderer } from "./lightingRenderer.js";
 import { SpellCaster } from "./spellCaster.js";
 import { SpriteSheet } from "./spellEffects.js";
 import { LightOrb } from "./lightOrb.js";
+import { XpDrop } from "./xpDrop.js";
 import { createRandom, generateWorld } from "./worldGenerator.js";
 import { WorldRenderer } from "./worldRenderer.js";
 import { Camera } from "./camera.js";
@@ -25,6 +26,7 @@ let enemySpriteSheet;
 let enemyItemSprites = {};
 let enemyProjectiles = [];
 let enemyBombs = [];
+let xpDrops = [];
 let enemySprites;
 let enemies = [];
 let lighting;
@@ -144,6 +146,7 @@ function createWorld() {
     enemies = spawnEnemies(world, TILE_SIZE, enemySprites);
     enemyProjectiles = [];
     enemyBombs = [];
+    xpDrops = [];
 
     // Each torch hangs just below the wall line of its tile, flickering out of sync.
     torches = world.torches.map(({ col, row }, i) =>
@@ -338,7 +341,11 @@ function draw() {
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
         for (const bomb of enemyBombs) bomb.update(frameScale, player, walls, world, TILE_SIZE);
         enemyBombs = enemyBombs.filter(bomb => !bomb.done);
-        spellCaster.update(frameScale, worldWidth(), worldHeight(), enemies);
+        spellCaster.update(frameScale, worldWidth(), worldHeight(), enemies, dead => {
+            xpDrops.push(new XpDrop(dead.x + dead.size / 2, dead.y + dead.size / 2));
+        });
+        for (const drop of xpDrops) drop.collect(player);
+        xpDrops = xpDrops.filter(drop => !drop.collected);
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
         player.stats.update(frameScale);
@@ -366,6 +373,7 @@ function draw() {
     push();
     camera.apply();
     for (const torch of torches) torch.display();
+    for (const drop of xpDrops) drop.display();
     spellCaster.display();
     lightOrb.display();
     pop();
