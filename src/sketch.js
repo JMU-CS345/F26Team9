@@ -315,6 +315,7 @@ function draw() {
 
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
+        for (const enemy of enemies) enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);

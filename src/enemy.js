@@ -96,6 +96,59 @@ export class Enemy extends Entity {
         this.placeholderColor = [180, 60, 60];
     }
 
+    /** Move one tile at a time, selecting neighboring floor tiles at random. */
+    updateWander(world, tileSize, walls, others = [], frameScale = 1) {
+        if (!this.isAlive()) return;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 1;
+        if (time === 0) return;
+
+        if (!this.wanderTarget) {
+            const col = Math.floor((this.x + this.size / 2) / tileSize);
+            const row = Math.floor((this.y + this.size / 2) / tileSize);
+            const choices = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => {
+                if (!world.isFloor(col + dx, row + dy)) return false;
+                const x = (col + dx + 0.5) * tileSize - this.size / 2;
+                const y = (row + dy + 0.5) * tileSize - this.size / 2;
+                return walls.hits({ x, y, w: this.size, h: this.size }).length === 0;
+            });
+            if (!choices.length) {
+                this.updateAnimation(false, time);
+                return;
+            }
+            const [dx, dy] = choices[Math.floor(this.random() * choices.length)];
+            this.wanderTarget = [
+                (col + dx + 0.5) * tileSize - this.size / 2,
+                (row + dy + 0.5) * tileSize - this.size / 2
+            ];
+        }
+
+        const [targetX, targetY] = this.wanderTarget;
+        const dx = targetX - this.x;
+        const dy = targetY - this.y;
+        const distance = Math.hypot(dx, dy);
+        const step = Math.min(distance, this.speed * time);
+        if (step === 0) {
+            this.wanderTarget = null;
+            this.updateAnimation(false, time);
+            return;
+        }
+        const x = this.x + dx / distance * step;
+        const y = this.y + dy / distance * step;
+        const overlapping = others.some(other => other !== this && other.isAlive() &&
+            x < other.x + other.size && x + this.size > other.x &&
+            y < other.y + other.size && y + this.size > other.y);
+        if (overlapping || walls.hits({ x, y, w: this.size, h: this.size }).length) {
+            this.wanderTarget = null; // Pick a different route next update.
+            this.updateAnimation(false, time);
+            return;
+        }
+        this.x = x;
+        this.y = y;
+        this.updateDirection(dx, dy);
+        this.updateAnimation(true, time);
+        if (step === distance) this.wanderTarget = null;
+    }
+
     /** Lowers health without allowing it to go below zero. */
     takeDamage(amount) {
         if (amount > 0) this.health = Math.max(0, this.health - amount);
