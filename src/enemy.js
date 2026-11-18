@@ -1,5 +1,6 @@
 import { Entity } from "./entity.js";
 import { EnemyProjectile } from "./enemyProjectile.js";
+import { EnemyBomb } from "./enemyBomb.js";
 
 // Resolve the existing sprite sheet relative to this module for Vite builds.
 export const ENEMY_SPRITE_PATH = new URL("./enemy_sprites (1).png", import.meta.url).href;
@@ -100,6 +101,8 @@ export class Enemy extends Entity {
         this.swoopCooldown = 120 + this.random() * 90;
         this.swoopFrames = 0;
         this.knifeCooldown = this.type === "goblin" ? 90 + this.random() * 90 : 0;
+        this.rushCooldown = 180 + this.random() * 120;
+        this.rushFrames = 0;
         this.placeholderColor = [180, 60, 60];
     }
 
@@ -188,7 +191,7 @@ export class Enemy extends Entity {
     updateGoblinAttack(player, projectiles, frameScale = 1) {
         if (this.type !== "goblin" || !this.isAlive()) return;
         const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
-        if (!time || (player.stats && !player.stats.isAlive())) return;
+        if (!time || this.rushFrames > 0 || (player.stats && !player.stats.isAlive())) return;
         this.knifeCooldown -= time;
         if (this.knifeCooldown > 0) return;
 
@@ -202,6 +205,54 @@ export class Enemy extends Entity {
         projectiles.push(new EnemyProjectile(x, y, dx, dy, "knife", this.damage));
         this.knifeCooldown = 150; // Two and a half seconds at 60 FPS.
         this.updateDirection(dx, dy);
+    }
+
+    /** Rush toward a nearby player, dropping one timed bomb when the rush ends. */
+    updateGoblinRush(player, world, tileSize, walls, others = [], bombs = [], frameScale = 1) {
+        if (this.type !== "goblin" || !this.isAlive()) return false;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
+        if (!time) return this.rushFrames > 0;
+        if (player.stats && !player.stats.isAlive()) return false;
+        if (this.rushFrames <= 0) {
+            this.rushCooldown -= time;
+            if (this.rushCooldown > 0) return false;
+            const dx = player.x + player.size / 2 - this.x - this.size / 2;
+            const dy = player.y + player.size / 2 - this.y - this.size / 2;
+            const distance = Math.hypot(dx, dy);
+            if (distance < 35 || distance > 180) return false;
+            this.rushDx = dx / distance;
+            this.rushDy = dy / distance;
+            this.rushFrames = 24;
+            this.rushCooldown = 300;
+            this.wanderTarget = null;
+        }
+        const travel = Math.min(time, this.rushFrames) * 5;
+        const steps = Math.ceil(travel / 2); // Check collision in small steps.
+        for (let i = 0; i < steps; i++) {
+            const toPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+            if (toPlayer <= 36) { this.rushFrames = 0; break; }
+            const x = this.x + this.rushDx * travel / steps;
+            const y = this.y + this.rushDy * travel / steps;
+            const corners = [[0, 0], [this.size, 0], [0, this.size], [this.size, this.size]];
+            const floor = corners.every(([ox, oy]) => world.isFloor(
+                Math.floor((x + ox - (ox ? 0.01 : 0)) / tileSize),
+                Math.floor((y + oy - (oy ? 0.01 : 0)) / tileSize)));
+            const overlap = others.some(other => other !== this && other.isAlive() &&
+                x < other.x + other.size && x + this.size > other.x &&
+                y < other.y + other.size && y + this.size > other.y);
+            if (!floor || overlap || walls.hits({ x, y, w: this.size, h: this.size }).length) {
+                this.rushFrames = 0;
+                break;
+            }
+            this.x = x;
+            this.y = y;
+        }
+        this.rushFrames = Math.max(0, this.rushFrames - time);
+        this.updateDirection(this.rushDx, this.rushDy);
+        this.updateAnimation(true, time);
+        if (!this.rushFrames) bombs.push(new EnemyBomb(
+            this.x + this.size / 2, this.y + this.size / 2, this.damage));
+        return true;
     }
 
     /** Two bouncing slime balls spread toward the player on each landing. */

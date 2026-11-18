@@ -24,6 +24,7 @@ let playerSpriteSheet;
 let enemySpriteSheet;
 let enemyItemSprites = {};
 let enemyProjectiles = [];
+let enemyBombs = [];
 let enemySprites;
 let enemies = [];
 let lighting;
@@ -142,6 +143,7 @@ function createWorld() {
     walls = new WallCollider(world, TILE_SIZE);
     enemies = spawnEnemies(world, TILE_SIZE, enemySprites);
     enemyProjectiles = [];
+    enemyBombs = [];
 
     // Each torch hangs just below the wall line of its tile, flickering out of sync.
     torches = world.torches.map(({ col, row }, i) =>
@@ -324,13 +326,17 @@ function draw() {
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
         for (const enemy of enemies) {
             const swooping = enemy.updateBatSwoop(player, world, TILE_SIZE, walls, enemies, frameScale);
-            const landed = swooping ? false : enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
+            const rushing = enemy.updateGoblinRush(player, world, TILE_SIZE,
+                walls, enemies, enemyBombs, frameScale);
+            const landed = swooping || rushing ? false : enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
             enemy.updateSlimeAttack(player, enemyProjectiles, landed);
             enemy.updateSkeletonAttack(player, enemyProjectiles, frameScale);
             enemy.updateGoblinAttack(player, enemyProjectiles, frameScale);
         }
         for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE, player);
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
+        for (const bomb of enemyBombs) bomb.update(frameScale);
+        enemyBombs = enemyBombs.filter(bomb => !bomb.done);
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
@@ -349,6 +355,7 @@ function draw() {
     worldRenderer.display();
     for (const enemy of enemies) if (enemy.isAlive()) enemy.display(enemyItemSprites);
     for (const shot of enemyProjectiles) shot.display(enemyItemSprites);
+    for (const bomb of enemyBombs) bomb.display(enemyItemSprites);
     player.display();
     pop();
 
