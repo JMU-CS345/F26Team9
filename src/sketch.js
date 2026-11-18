@@ -1,5 +1,5 @@
 import { Player, StatBars } from "./player.js";
-import { ENEMY_SPRITE_PATH, createEnemySprites, spawnEnemies } from "./enemy.js";
+import { ENEMY_SPRITE_PATH, ENEMY_ITEM_PATH, createEnemySprites, createEnemyItemSprites, spawnEnemies } from "./enemy.js";
 import { Menu } from "./menu.js";
 import { Inventory } from "./inventory.js";
 import { InventoryMenu } from "./inventoryMenu.js";
@@ -22,6 +22,8 @@ let inventory;
 let inventoryMenu;
 let playerSpriteSheet;
 let enemySpriteSheet;
+let enemyItemSprites = {};
+let enemyProjectiles = [];
 let enemySprites;
 let enemies = [];
 let lighting;
@@ -102,6 +104,10 @@ function setup() {
     noSmooth();
 
     player = new Player(0, 0, createPlayerSprites(playerSpriteSheet));
+    // Optional attack art must not hold up the initial class-selection screen.
+    loadImage(ENEMY_ITEM_PATH, sheet => {
+        enemyItemSprites = createEnemyItemSprites(sheet);
+    }, error => console.warn("Enemy attack sprites unavailable:", error));
     enemySprites = {};
     for (const type of ["skeleton", "goblin", "slime", "bat"]) {
         enemySprites[type] = createEnemySprites(enemySpriteSheet, type);
@@ -135,6 +141,7 @@ function createWorld() {
     worldRenderer.build(world, 0, 0);
     walls = new WallCollider(world, TILE_SIZE);
     enemies = spawnEnemies(world, TILE_SIZE, enemySprites);
+    enemyProjectiles = [];
 
     // Each torch hangs just below the wall line of its tile, flickering out of sync.
     torches = world.torches.map(({ col, row }, i) =>
@@ -316,6 +323,8 @@ function draw() {
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
         for (const enemy of enemies) enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
+        for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE);
+        enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
@@ -333,6 +342,7 @@ function draw() {
     camera.apply();
     worldRenderer.display();
     for (const enemy of enemies) if (enemy.isAlive()) enemy.display();
+    for (const shot of enemyProjectiles) shot.display(enemyItemSprites);
     player.display();
     pop();
 
