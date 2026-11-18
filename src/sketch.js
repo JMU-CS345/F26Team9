@@ -1,4 +1,5 @@
 import { Player, StatBars } from "./player.js";
+import { ENEMY_SPRITE_PATH, createEnemySprites, spawnEnemies } from "./enemy.js";
 import { Menu } from "./menu.js";
 import { Inventory } from "./inventory.js";
 import { InventoryMenu } from "./inventoryMenu.js";
@@ -20,6 +21,9 @@ let developerMenu;
 let inventory;
 let inventoryMenu;
 let playerSpriteSheet;
+let enemySpriteSheet;
+let enemySprites;
+let enemies = [];
 let lighting;
 let spellImages;
 let spellCaster;
@@ -63,6 +67,7 @@ const PLAYER_DIRECTIONS = [
 /** Loads character artwork before setup(). */
 function preload() {
     playerSpriteSheet = loadImage("src/assets/player/mage-walk-8dir.png");
+    enemySpriteSheet = loadImage(ENEMY_SPRITE_PATH);
     spellImages = {
         fireball: loadImage("src/assets/player/fireball.png"),
         iceball: loadImage("src/assets/player/fireball_blue.png"),
@@ -97,6 +102,10 @@ function setup() {
     noSmooth();
 
     player = new Player(0, 0, createPlayerSprites(playerSpriteSheet));
+    enemySprites = {};
+    for (const type of ["skeleton", "goblin", "slime", "bat"]) {
+        enemySprites[type] = createEnemySprites(enemySpriteSheet, type);
+    }
     camera = new Camera(CAMERA_ZOOM);
     camera.setView(width, height);
     worldRenderer = new WorldRenderer(tileSheets.floor, tileSheets.wall, TILE_SIZE);
@@ -125,6 +134,7 @@ function createWorld() {
     world = generateWorld(WORLD_COLS, WORLD_ROWS, createRandom(Date.now()), { maxRooms: 14 });
     worldRenderer.build(world, 0, 0);
     walls = new WallCollider(world, TILE_SIZE);
+    enemies = spawnEnemies(world, TILE_SIZE, enemySprites);
 
     // Each torch hangs just below the wall line of its tile, flickering out of sync.
     torches = world.torches.map(({ col, row }, i) =>
@@ -305,6 +315,7 @@ function draw() {
 
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
+        for (const enemy of enemies) enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
@@ -321,6 +332,7 @@ function draw() {
     push();
     camera.apply();
     worldRenderer.display();
+    for (const enemy of enemies) if (enemy.isAlive()) enemy.display();
     player.display();
     pop();
 
