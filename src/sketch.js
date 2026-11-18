@@ -326,7 +326,7 @@ function draw() {
             enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
             enemy.updateSkeletonAttack(player, enemyProjectiles, frameScale);
         }
-        for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE);
+        for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE, player);
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
