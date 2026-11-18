@@ -322,7 +322,10 @@ function draw() {
 
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
-        for (const enemy of enemies) enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
+        for (const enemy of enemies) {
+            enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
+            enemy.updateSkeletonAttack(player, enemyProjectiles, frameScale);
+        }
         for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE);
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
         spellCaster.update(frameScale, worldWidth(), worldHeight());
