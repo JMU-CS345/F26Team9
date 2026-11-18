@@ -104,27 +104,29 @@ The only unfinished story is #60. Enemies appear and chase the player, but they 
 ## 7. Stakeholder Feedback
 
 *Record what the instructor said: what they liked, what should change, and any new priorities. (Sprint 4: write "n/a")*
-
+ - Stakeholder liked the lamp/lighting, especially complimented the visual aspect of the game.
+ - Made sure to reinforce getting player/enemy damage implemented based on the set stats of the mage.
+ - No new priorities stick out, just getting down what was missed in the last sprints.
 
 ---
 
 ## 8. Backlog Changes
 
-**New stories added:**
+**New stories added:** - Basic enemy that can be defeated
 
-**Priorities changed:**
+**Priorities changed:** n/a
 
-**Stories removed:**
+**Stories removed:** n/a
 
 **If no change was needed, why not?**
-
+The priority of defeating enemies remained the same at the end of the sprint.
 ---
 
 ## 9. Quality
 
 **CI status on `production`:** Passing (19 of 19 runs passed this sprint)
 
-**Number of specs:** __
+**Number of specs:** 5
 
 **Known bugs in the deployed build:** Enemies don't damage the player yet (#60), so the HP bar doesn't change during normal play.
 
@@ -138,6 +140,6 @@ The only unfinished story is #60. Enemies appear and chase the player, but they 
 - [x] Every committed item marked Done or Not Done
 - [x] Every item marked Done has all its acceptance criteria checked in section 5
 - [x] Metrics filled in, with the committed/completed difference explained
-- [ ] Stakeholder feedback recorded
-- [ ] Backlog updated, or the reason no change was needed explained
-- [ ] Report committed to `scrum/review/` via pull request by 11:59 p.m. on the day of the review
+- [x] Stakeholder feedback recorded
+- [x] Backlog updated, or the reason no change was needed explained
+- [x] Report committed to `scrum/review/` via pull request by 11:59 p.m. on the day of the review
