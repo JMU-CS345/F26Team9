@@ -4,19 +4,19 @@
 
 ## 1. Meeting Details
 
-**Date:** __/__/2026
+**Date:** 11/18/2026
 
-**Scrum Master:** Luke B
+**Scrum Master:** Jason W.
 
 **Attendees:** Luke, Jason, Matthew, Kevin
 
 **Absent:** N/A
 
-**Presenter:** ______
+**Presenter:** Kevin
 
 **Deployed build reviewed:** jmu-cs345.github.io/F26Team9/
 
-**Release PR into `production`:** PR #__ (merged before the review began)
+**Release PR into `production`:** PR #85 (merged before the review began)
 
 ---
 
@@ -103,7 +103,6 @@ The only unfinished story is #60. Enemies appear and chase the player, but they 
 
 ## 7. Stakeholder Feedback
 
-*Record what the instructor said: what they liked, what should change, and any new priorities. (Sprint 4: write "n/a")*
  - Stakeholder liked the lamp/lighting, especially complimented the visual aspect of the game.
  - Made sure to reinforce getting player/enemy damage implemented based on the set stats of the mage.
  - No new priorities stick out, just getting down what was missed in the last sprints.
