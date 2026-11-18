@@ -21,6 +21,13 @@ export class Camera {
         this.worldHeight = Infinity;
     }
 
+    /** Changes zoom without replacing the current camera or losing world bounds. */
+    setZoom(zoom) {
+        if (!Number.isFinite(zoom) || zoom <= 0) return;
+        this.zoom = zoom;
+        this.clamp();
+    }
+
     /**
      * Sets the size of the screen area the camera draws into.
      * @param {number} w - View width in screen pixels.

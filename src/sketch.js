@@ -122,7 +122,7 @@ function setup() {
     lightOrb = new LightOrb(player.x, player.y);
     menu = new Menu();
     inventory = new Inventory();
-    developerMenu = new DeveloperMenu(player, menu, localStorage, inventory);
+    developerMenu = new DeveloperMenu(player, menu, localStorage, inventory, camera);
     inventoryMenu = new InventoryMenu(inventory, menu);
     lighting = new LightingRenderer(width, height);
     spellCaster = new SpellCaster({
