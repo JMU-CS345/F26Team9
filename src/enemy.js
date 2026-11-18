@@ -1,4 +1,5 @@
 import { Entity } from "./entity.js";
+import { EnemyProjectile } from "./enemyProjectile.js";
 
 // Resolve the existing sprite sheet relative to this module for Vite builds.
 export const ENEMY_SPRITE_PATH = new URL("./enemy_sprites (1).png", import.meta.url).href;
@@ -93,6 +94,8 @@ export class Enemy extends Entity {
         this.damage = stats.damage ?? 1;
         this.type = stats.type ?? "skeleton";
         this.random = stats.random ?? Math.random;
+        // Stagger first throws so spawned skeletons do not all fire together.
+        this.throwCooldown = 60 + this.random() * 60;
         this.placeholderColor = [180, 60, 60];
     }
 
@@ -147,6 +150,26 @@ export class Enemy extends Entity {
         this.updateDirection(dx, dy);
         this.updateAnimation(true, time);
         if (step === distance) this.wanderTarget = null;
+    }
+
+    /** Throw a sword toward the player every two seconds while in range. */
+    updateSkeletonAttack(player, projectiles, frameScale = 1) {
+        if (this.type !== "skeleton" || !this.isAlive()) return;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
+        if (!time) return;
+        this.throwCooldown -= time;
+        if (this.throwCooldown > 0) return;
+
+        const x = this.x + this.size / 2;
+        const y = this.y + this.size / 2;
+        const dx = player.x + player.size / 2 - x;
+        const dy = player.y + player.size / 2 - y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 1 || distance > 220) return;
+
+        projectiles.push(new EnemyProjectile(x, y, dx, dy, "sword", this.damage));
+        this.throwCooldown = 120; // Two seconds at 60 FPS.
+        this.updateDirection(dx, dy);
     }
 
     /** Lowers health without allowing it to go below zero. */
