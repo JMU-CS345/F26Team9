@@ -327,6 +327,7 @@ function draw() {
             const landed = swooping ? false : enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
             enemy.updateSlimeAttack(player, enemyProjectiles, landed);
             enemy.updateSkeletonAttack(player, enemyProjectiles, frameScale);
+            enemy.updateGoblinAttack(player, enemyProjectiles, frameScale);
         }
         for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE, player);
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);

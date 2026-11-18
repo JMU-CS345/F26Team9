@@ -99,6 +99,7 @@ export class Enemy extends Entity {
         this.hopPause = 0; // Slimes briefly rest after each completed hop.
         this.swoopCooldown = 120 + this.random() * 90;
         this.swoopFrames = 0;
+        this.knifeCooldown = this.type === "goblin" ? 90 + this.random() * 90 : 0;
         this.placeholderColor = [180, 60, 60];
     }
 
@@ -180,6 +181,26 @@ export class Enemy extends Entity {
 
         projectiles.push(new EnemyProjectile(x, y, dx, dy, "sword", this.damage));
         this.throwCooldown = 120; // Two seconds at 60 FPS.
+        this.updateDirection(dx, dy);
+    }
+
+    /** Goblins throw knives while wandering instead of chasing the player. */
+    updateGoblinAttack(player, projectiles, frameScale = 1) {
+        if (this.type !== "goblin" || !this.isAlive()) return;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
+        if (!time || (player.stats && !player.stats.isAlive())) return;
+        this.knifeCooldown -= time;
+        if (this.knifeCooldown > 0) return;
+
+        const x = this.x + this.size / 2;
+        const y = this.y + this.size / 2;
+        const dx = player.x + player.size / 2 - x;
+        const dy = player.y + player.size / 2 - y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 1 || distance > 220) return;
+
+        projectiles.push(new EnemyProjectile(x, y, dx, dy, "knife", this.damage));
+        this.knifeCooldown = 150; // Two and a half seconds at 60 FPS.
         this.updateDirection(dx, dy);
     }
 
