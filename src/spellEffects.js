@@ -147,7 +147,7 @@ export class Projectile {
      * @param {number} h - Canvas height.
      * @param {WallCollider|null} walls - Optional walls the bolt explodes against.
      */
-    update(frameScale, w, h, walls = null) {
+    update(frameScale, w, h, walls = null, enemies = []) {
         this.age += frameScale;
         this.updateSparks(frameScale);
 
@@ -174,7 +174,8 @@ export class Projectile {
 
         const outside = this.x < 0 || this.y < 0 || this.x > w || this.y > h;
         const hitWall = walls !== null && this.hitsWall(walls, previousX, previousY);
-        if (this.traveled >= this.style.range || outside || hitWall) {
+        const hitEnemy = this.style.damage && this.hitsEnemy(enemies, previousX, previousY);
+        if (this.traveled >= this.style.range || outside || hitWall || hitEnemy) {
             // Explode on the edge, not past it, so the blast stays visible.
             this.x = Math.max(0, Math.min(this.x, w));
             this.y = Math.max(0, Math.min(this.y, h));
@@ -202,6 +203,24 @@ export class Projectile {
                 this.y = py;
                 return true;
             }
+        }
+        return false;
+    }
+
+    /** Checks the full flight step so fast bolts cannot pass through enemies. */
+    hitsEnemy(enemies, fromX, fromY) {
+        const steps = Math.max(1, Math.ceil(Math.hypot(this.x - fromX, this.y - fromY) / 2));
+        for (let i = 0; i <= steps; i++) {
+            const x = fromX + (this.x - fromX) * i / steps;
+            const y = fromY + (this.y - fromY) * i / steps;
+            const enemy = enemies.find(e => e.isAlive() && x >= e.x && x <= e.x + e.size &&
+                y >= e.y && y <= e.y + e.size);
+            if (!enemy) continue;
+            this.x = x;
+            this.y = y;
+            enemy.takeDamage(this.style.damage);
+            if (!enemy.isAlive()) this.defeatedEnemy = enemy;
+            return true;
         }
         return false;
     }

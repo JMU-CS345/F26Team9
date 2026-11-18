@@ -325,6 +325,7 @@ function draw() {
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
         for (const enemy of enemies) {
+            enemy.hitFlash = Math.max(0, enemy.hitFlash - frameScale);
             const swooping = enemy.updateBatSwoop(player, world, TILE_SIZE, walls, enemies, frameScale);
             const rushing = enemy.updateGoblinRush(player, world, TILE_SIZE,
                 walls, enemies, enemyBombs, frameScale);
@@ -337,7 +338,7 @@ function draw() {
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
         for (const bomb of enemyBombs) bomb.update(frameScale, player, walls, world, TILE_SIZE);
         enemyBombs = enemyBombs.filter(bomb => !bomb.done);
-        spellCaster.update(frameScale, worldWidth(), worldHeight());
+        spellCaster.update(frameScale, worldWidth(), worldHeight(), enemies);
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
         player.stats.update(frameScale);

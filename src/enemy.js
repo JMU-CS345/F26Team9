@@ -92,6 +92,7 @@ export class Enemy extends Entity {
         super(x, y, SPRITE_SIZE, stats.speed ?? 1, sprites);
         this.maxHealth = stats.health ?? 3;
         this.health = this.maxHealth;
+        this.hitFlash = 0;
         this.damage = stats.damage ?? 1;
         this.type = stats.type ?? "skeleton";
         this.random = stats.random ?? Math.random;
@@ -332,7 +333,10 @@ export class Enemy extends Entity {
 
     /** Draw the purple echo frames in front of a swooping bat. */
     display(items = {}) {
+        push();
+        if (this.hitFlash > 0) tint(255, 60, 60);
         super.display();
+        pop();
         if (this.type !== "bat" || this.swoopFrames <= 0 || !items.echo?.length) return;
         const frame = items.echo[Math.floor(this.swoopFrames / 3) % items.echo.length];
         push();
@@ -344,7 +348,10 @@ export class Enemy extends Entity {
 
     /** Lowers health without allowing it to go below zero. */
     takeDamage(amount) {
-        if (amount > 0) this.health = Math.max(0, this.health - amount);
+        if (amount > 0 && this.isAlive()) {
+            this.health = Math.max(0, this.health - amount);
+            this.hitFlash = 12;
+        }
     }
 
     /** @returns {boolean} Whether this enemy still has health remaining. */

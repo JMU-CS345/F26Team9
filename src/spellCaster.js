@@ -20,7 +20,7 @@ export const SPELLS = {
         cooldown: 30,
         manaCost: 8,
         create: (art, x, y, dir) => new Projectile(x, y, dir, {
-            sheet: art.fireball, speed: 7, range: 520,
+            sheet: art.fireball, speed: 7, range: 520, damage: 1,
             lightRadius: 85, lightColor: [1.0, 0.55, 0.2], sparkColor: [255, 170, 70],
             wobble: { amplitude: 3, wavelength: 220 }
         })
@@ -140,11 +140,11 @@ export class SpellCaster {
      * @param {number} w - Canvas width.
      * @param {number} h - Canvas height.
      */
-    update(frameScale, w, h) {
+    update(frameScale, w, h, enemies = []) {
         for (const id of Object.keys(this.cooldowns)) {
             this.cooldowns[id] = Math.max(0, this.cooldowns[id] - frameScale);
         }
-        for (const effect of this.effects) effect.update(frameScale, w, h, this.walls);
+        for (const effect of this.effects) effect.update(frameScale, w, h, this.walls, enemies);
         this.effects = this.effects.filter(effect => !effect.done);
     }
 
