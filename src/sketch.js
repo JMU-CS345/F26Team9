@@ -146,6 +146,55 @@ function worldHeight() {
     return world.rows * TILE_SIZE;
 }
 
+/**
+ * The middle of the player's feet, which is what reaches chests.
+ * @returns {number[]} [x, y] in world pixels.
+ */
+function playerFeet() {
+    const feet = player.getHitbox();
+    return [feet.x + feet.w / 2, feet.y + feet.h / 2];
+}
+
+/** @returns {Chest|null} The closed chest the player can reach, if any. */
+function reachableChest() {
+    const [x, y] = playerFeet();
+    return world.chests.find(chest => !chest.opened && chest.inReach(x, y, TILE_SIZE)) || null;
+}
+
+/**
+ * Opens the chest next to the player, gives its reward, and shows what it was.
+ * @returns {boolean} True if a chest was opened.
+ */
+function openNearbyChest() {
+    const chest = reachableChest();
+    if (!chest) return false;
+    const reward = chest.open();
+    if (!reward) return false;
+    chest.showPopup(inventory.receive(reward));
+    return true;
+}
+
+/**
+ * Draws the player's gold below the stat bars.
+ * @param {number} x - Left edge in screen pixels.
+ * @param {number} y - Top edge in screen pixels.
+ */
+function drawGold(x, y) {
+    push();
+    stroke(120, 80, 20);
+    strokeWeight(2);
+    fill(240, 196, 70);
+    circle(x + 9, y + 9, 16);
+    noStroke();
+    fill(255, 236, 150);
+    circle(x + 7, y + 7, 5);
+    fill(235);
+    textAlign(LEFT, CENTER);
+    textSize(14);
+    text(inventory.gold + " gold", x + 26, y + 9);
+    pop();
+}
+
 /** Draws the four assigned hotkeys during gameplay. */
 function drawHotbar() {
     push();
@@ -195,6 +244,7 @@ function draw() {
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
+        for (const chest of world.chests) chest.update(frameScale);
         player.stats.update(frameScale);
         statBars.update(frameScale);
         camera.follow(player.x + player.size / 2, player.y + player.size / 2, frameScale);
@@ -208,6 +258,7 @@ function draw() {
     push();
     camera.apply();
     worldRenderer.display();
+    for (const chest of world.chests) chest.display(TILE_SIZE);
     player.display();
     pop();
 
@@ -217,6 +268,8 @@ function draw() {
     push();
     camera.apply();
     for (const torch of torches) torch.display();
+    const nearChest = reachableChest();
+    for (const chest of world.chests) chest.displayLabel(TILE_SIZE, chest === nearChest);
     spellCaster.display();
     lightOrb.display();
     pop();
@@ -231,10 +284,11 @@ function draw() {
     textSize(menu.getTextSize());
     text("MageQuest", 20, 20);
     textSize(13);
-    text("Q: Settings    P: Dev    E: Inventory", 20, 55);
+    text("Q: Settings    P: Dev    E: Inventory    Space: Open chest", 20, 55);
     pop();
 
     statBars.display(20, 80);
+    drawGold(20, 162);
     statBars.displayHurtFlash();
 
     drawHotbar();
@@ -323,6 +377,11 @@ function keyPressed(event) {
             return false;
         }
         activeMenu.handleInput(pressedKey);
+        return false;
+    }
+
+    if (pressedKey === " " || (event && event.code === "Space")) {
+        if (!event || !event.repeat) openNearbyChest();
         return false;
     }
 

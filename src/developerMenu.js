@@ -41,6 +41,12 @@ export class DeveloperMenu {
                 value: () => "Lv " + stats.level,
                 change: dir => { if (dir > 0) stats.gainExperience(25); } }
         ] : [];
+        if (inventory) {
+            this.statRows.push({ label: "Gold (A: -50, D: +50)", color: [240, 196, 70],
+                value: () => String(inventory.gold),
+                change: dir => dir > 0 ? inventory.addGold(50)
+                    : inventory.spendGold(Math.min(50, inventory.gold)) });
+        }
 
         this.loadSettings();
         this.applySettings();

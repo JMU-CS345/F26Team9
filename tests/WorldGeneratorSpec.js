@@ -1,7 +1,9 @@
 import { TileLayer } from "../src/tileLayer.js";
 import {
-    FLOOR, FLOOR_VARIANTS, WALL, World, createRandom, generateWorld, roomsOverlap, roomCenter
+    FLOOR, FLOOR_VARIANTS, WALL, World, createRandom, generateWorld, roomsOverlap, roomCenter,
+    Chest, CHEST_GOLD, rollChestReward
 } from "../src/worldGenerator.js";
+import { ITEM_CATALOG } from "../src/inventory.js";
 
 /** Jasmine unit tests for tile layers and world generation. */
 describe("TileLayer", function () {
@@ -150,5 +152,77 @@ describe("World walls and floor display", function () {
         expect(world.wallMask(4, 2)).toBe(1 + 4);     // right edge: north and south
         expect(world.wallMask(4, 4)).toBe(1 + 8);     // bottom-right corner: north and west
         expect(world.wallMask(2, 2)).toBe(0);         // floor with no walls beside it
+    });
+});
+
+describe("Chests", function () {
+    const seeds = [1, 2, 3, 42, 99, 2024];
+
+    it("places at least one chest, each inside a room on a floor tile", function () {
+        for (const seed of seeds) {
+            const world = generateWorld(64, 40, createRandom(seed), { maxRooms: 14 });
+            expect(world.chests.length).toBeGreaterThan(0);
+            for (const chest of world.chests) {
+                expect(world.isFloor(chest.col, chest.row)).toBe(true);
+                const room = world.rooms.find(r => chest.col >= r.x && chest.col < r.x + r.w
+                    && chest.row >= r.y && chest.row < r.y + r.h);
+                expect(room).toBeDefined();
+            }
+        }
+    });
+
+    it("never puts two chests in one room or a chest on the starting tile", function () {
+        for (const seed of seeds) {
+            const world = generateWorld(64, 40, createRandom(seed), { maxRooms: 14 });
+            const keys = world.chests.map(c => c.col + "," + c.row);
+            expect(new Set(keys).size).toBe(keys.length);
+            expect(world.chests.length).toBeLessThanOrEqual(world.rooms.length);
+            expect(keys).not.toContain(world.start[0] + "," + world.start[1]);
+        }
+    });
+
+    it("places the same chests with the same rewards for the same seed", function () {
+        const a = generateWorld(64, 40, createRandom(7), { maxRooms: 14 });
+        const b = generateWorld(64, 40, createRandom(7), { maxRooms: 14 });
+        expect(a.chests.map(c => [c.col, c.row, c.reward]))
+            .toEqual(b.chests.map(c => [c.col, c.row, c.reward]));
+    });
+
+    it("holds gold, a potion, or gear", function () {
+        const random = createRandom(5);
+        const randomInt = (min, max) => min + Math.floor(random() * (max - min + 1));
+        const kinds = new Set();
+        for (let i = 0; i < 300; i++) {
+            const reward = rollChestReward(random, randomInt);
+            if (reward.kind === "gold") {
+                expect(reward.amount).toBeGreaterThanOrEqual(CHEST_GOLD.min);
+                expect(reward.amount).toBeLessThanOrEqual(CHEST_GOLD.max);
+                kinds.add("gold");
+            } else {
+                const item = ITEM_CATALOG.find(entry => entry.id === reward.id);
+                expect(["potion", "gear"]).toContain(item.type);
+                kinds.add(item.type);
+            }
+        }
+        expect([...kinds].sort()).toEqual(["gear", "gold", "potion"]);
+    });
+
+    it("gives its reward once and cannot be reopened", function () {
+        const chest = new Chest(3, 4, { kind: "gold", amount: 20 });
+        expect(chest.open()).toEqual({ kind: "gold", amount: 20 });
+        expect(chest.opened).toBe(true);
+        expect(chest.open()).toBeNull();
+    });
+
+    it("can only be reached from close by", function () {
+        const chest = new Chest(2, 2, { kind: "gold", amount: 10 });
+        expect(chest.inReach(62, 70, 25)).toBe(true);
+        expect(chest.inReach(62, 120, 25)).toBe(false);
+    });
+
+    it("has open and closed sprites with rows of equal width", function () {
+        for (const art of [Chest.CLOSED, Chest.OPEN]) {
+            for (const row of art) expect(row.length).toBe(art[0].length);
+        }
     });
 });

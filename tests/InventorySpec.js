@@ -1,5 +1,5 @@
 import { Player } from "../src/player.js";
-import { ITEM_CATALOG, Inventory } from "../src/inventory.js";
+import { ITEM_CATALOG, Inventory, MAX_ITEM_COUNT, FULL_ITEM_GOLD } from "../src/inventory.js";
 import { InventoryMenu } from "../src/inventoryMenu.js";
 import { DeveloperMenu } from "../src/developerMenu.js";
 
@@ -267,5 +267,54 @@ describe("Developer menu inventory testing controls", function () {
         menu.handleInput("d");
         expect(player.speed).toBe(2);
         expect(player.acceleration).toBe(0.75);
+    });
+});
+
+describe("Gold and chest rewards", function () {
+    function storage() {
+        const data = {};
+        return { getItem: k => data[k] || null, setItem: (k, v) => { data[k] = v; } };
+    }
+
+    it("starts with no gold and adds whole coins", function () {
+        const inventory = new Inventory(storage());
+        expect(inventory.gold).toBe(0);
+        expect(inventory.addGold(25)).toBe(25);
+        inventory.addGold(-10);
+        expect(inventory.gold).toBe(25);
+    });
+
+    it("spends gold only when there is enough", function () {
+        const inventory = new Inventory(storage());
+        inventory.addGold(30);
+        expect(inventory.spendGold(20)).toBe(true);
+        expect(inventory.gold).toBe(10);
+        expect(inventory.spendGold(20)).toBe(false);
+        expect(inventory.gold).toBe(10);
+    });
+
+    it("saves and reloads gold", function () {
+        const saved = storage();
+        new Inventory(saved).addGold(42);
+        expect(new Inventory(saved).gold).toBe(42);
+    });
+
+    it("receives gold, potions, and gear from a chest", function () {
+        const inventory = new Inventory(storage());
+        expect(inventory.receive({ kind: "gold", amount: 15 })).toBe("+15 gold");
+        expect(inventory.gold).toBe(15);
+        const potions = inventory.getQuantity("speed_potion");
+        expect(inventory.receive({ kind: "item", id: "speed_potion" })).toBe("Speed Potion");
+        expect(inventory.getQuantity("speed_potion")).toBe(potions + 1);
+        expect(inventory.receive({ kind: "item", id: "iron_sword" })).toBe("Iron Sword");
+        expect(inventory.getQuantity("iron_sword")).toBe(1);
+    });
+
+    it("turns an item into gold when the player already has the most copies", function () {
+        const inventory = new Inventory(storage());
+        inventory.setQuantity("wooden_shield", MAX_ITEM_COUNT);
+        inventory.receive({ kind: "item", id: "wooden_shield" });
+        expect(inventory.getQuantity("wooden_shield")).toBe(MAX_ITEM_COUNT);
+        expect(inventory.gold).toBe(FULL_ITEM_GOLD);
     });
 });
