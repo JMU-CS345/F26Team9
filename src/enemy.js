@@ -97,6 +97,8 @@ export class Enemy extends Entity {
         // Stagger first throws so spawned skeletons do not all fire together.
         this.throwCooldown = 60 + this.random() * 60;
         this.hopPause = 0; // Slimes briefly rest after each completed hop.
+        this.swoopCooldown = 120 + this.random() * 90;
+        this.swoopFrames = 0;
         this.placeholderColor = [180, 60, 60];
     }
 
@@ -195,13 +197,77 @@ export class Enemy extends Entity {
         }
     }
 
-    /** Use the existing lifted slime sprite while hopping. */
+    /** Rush along a fixed direction, checking walls and other enemies each step. */
+    updateBatSwoop(player, world, tileSize, walls, others = [], frameScale = 1) {
+        if (this.type !== "bat" || !this.isAlive()) return false;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
+        if (!time) return this.swoopFrames > 0;
+        if (this.swoopFrames <= 0) {
+            this.swoopCooldown -= time;
+            if (this.swoopCooldown > 0) return false;
+            if (player.stats && !player.stats.isAlive()) return false;
+            const dx = player.x + player.size / 2 - this.x - this.size / 2;
+            const dy = player.y + player.size / 2 - this.y - this.size / 2;
+            const distance = Math.hypot(dx, dy);
+            if (distance < 1 || distance > 200) return false;
+            this.swoopDx = dx / distance;
+            this.swoopDy = dy / distance;
+            this.swoopFrames = 25;
+            this.swoopCooldown = 180;
+            this.swoopHit = false;
+            this.wanderTarget = null;
+        }
+        const travel = Math.min(time, this.swoopFrames) * 8;
+        const steps = Math.ceil(travel / 2); // Don't skip narrow walls or player hits.
+        for (let i = 0; i < steps; i++) {
+            const x = this.x + this.swoopDx * travel / steps;
+            const y = this.y + this.swoopDy * travel / steps;
+            const corners = [[0, 0], [this.size, 0], [0, this.size], [this.size, this.size]];
+            const floor = corners.every(([ox, oy]) => world.isFloor(
+                Math.floor((x + ox - (ox ? 0.01 : 0)) / tileSize),
+                Math.floor((y + oy - (oy ? 0.01 : 0)) / tileSize)));
+            const overlap = others.some(other => other !== this && other.isAlive() &&
+                x < other.x + other.size && x + this.size > other.x &&
+                y < other.y + other.size && y + this.size > other.y);
+            if (!floor || overlap || walls.hits({ x, y, w: this.size, h: this.size }).length) {
+                this.swoopFrames = 0;
+                break;
+            }
+            this.x = x;
+            this.y = y;
+            if (!this.swoopHit && (!player.stats || player.stats.isAlive()) &&
+                Math.hypot(this.x + this.size / 2 - player.x - player.size / 2,
+                    this.y + this.size / 2 - player.y - player.size / 2) < this.size / 2 + player.size * 0.35) {
+                player.takeDamage(this.damage);
+                this.swoopHit = true; // Only once during this rush.
+            }
+        }
+        this.swoopFrames = Math.max(0, this.swoopFrames - time);
+        this.updateDirection(this.swoopDx, this.swoopDy);
+        this.updateAnimation(this.swoopFrames > 0, time);
+        return true;
+    }
+
+    /** Use the lifted enemy sprite during slime hops and bat swoops. */
     getCurrentSprite() {
         const frames = this.sprites[this.direction];
-        if (this.type === "slime" && this.isMoving && Array.isArray(frames) && frames[2]) {
+        if (((this.type === "slime" && this.isMoving) ||
+            (this.type === "bat" && this.swoopFrames > 0)) && Array.isArray(frames) && frames[2]) {
             return frames[2];
         }
         return super.getCurrentSprite();
+    }
+
+    /** Draw the purple echo frames in front of a swooping bat. */
+    display(items = {}) {
+        super.display();
+        if (this.type !== "bat" || this.swoopFrames <= 0 || !items.echo?.length) return;
+        const frame = items.echo[Math.floor(this.swoopFrames / 3) % items.echo.length];
+        push();
+        imageMode(CENTER);
+        image(frame, this.x + this.size / 2 + this.swoopDx * 18,
+            this.y + this.size / 2 + this.swoopDy * 18, 20, 20);
+        pop();
     }
 
     /** Lowers health without allowing it to go below zero. */

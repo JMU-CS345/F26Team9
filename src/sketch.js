@@ -323,7 +323,8 @@ function draw() {
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
         for (const enemy of enemies) {
-            const landed = enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
+            const swooping = enemy.updateBatSwoop(player, world, TILE_SIZE, walls, enemies, frameScale);
+            const landed = swooping ? false : enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
             enemy.updateSlimeAttack(player, enemyProjectiles, landed);
             enemy.updateSkeletonAttack(player, enemyProjectiles, frameScale);
         }
@@ -345,7 +346,7 @@ function draw() {
     push();
     camera.apply();
     worldRenderer.display();
-    for (const enemy of enemies) if (enemy.isAlive()) enemy.display();
+    for (const enemy of enemies) if (enemy.isAlive()) enemy.display(enemyItemSprites);
     for (const shot of enemyProjectiles) shot.display(enemyItemSprites);
     player.display();
     pop();
