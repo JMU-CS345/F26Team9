@@ -52,6 +52,6 @@ describe("Goblin rush and timed bombs", function () {
         const sprites = createEnemyItemSprites({ get: (x, y) => ({ x, y }) });
         expect(sprites.bomb[0]).toEqual({ x: 0, y: 175 });
         bomb.update(1);
-        expect(bomb.done).toBe(true);
+        expect(bomb.exploding).toBe(true);
     });
 });

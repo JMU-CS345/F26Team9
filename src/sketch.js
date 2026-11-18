@@ -335,7 +335,7 @@ function draw() {
         }
         for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE, player);
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
-        for (const bomb of enemyBombs) bomb.update(frameScale);
+        for (const bomb of enemyBombs) bomb.update(frameScale, player, walls, world, TILE_SIZE);
         enemyBombs = enemyBombs.filter(bomb => !bomb.done);
         spellCaster.update(frameScale, worldWidth(), worldHeight());
         lightOrb.update(player, frameScale);
