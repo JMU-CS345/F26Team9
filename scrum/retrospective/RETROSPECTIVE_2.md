@@ -15,7 +15,7 @@
 | Action item | Owner | Done? | Did it help? |
 |-------------|-------|-------|--------------|
 | World Generation (measure: successful world creation) | Luke Bonnell, Kevin Scafe | Yes. #2 "Render a dungeon room as tiles" and #3a "Generate a dungeon floor" are both done. | Yes. In Sprint 1, world generation was the main reason we fell short. This sprint, splitting #3 into a smaller first slice and pairing on it got it finished, and the measure (a generated world) was met. |
-| More Enemies (measure: more enemies are present) | Matthew Creighton | Yes. #60 "Basic Enemy Generation" and #4 "Basic enemy that can be defeated" are done. | Yes. No backlog item covered enemies before. The new story delivered the combat the stakeholder asked for. |
+| More Enemies (measure: more enemies are present) | Matthew Creighton | Partially. #60 "Basic Enemy Generation" is done but #4 "Basic enemy that can be defeated" is not and will be moved to Sprint 3. | Yes. No backlog item covered enemies before. The new story delivered the combat the stakeholder asked for. |
 | Stats system (measure: a points/value table) | Jason Waddell | Yes. The value table was the first task of #21. #21 and #61 "Player Stats" are done. | Yes. Building the stats object and takeDamage() first let the stories that depended on them (#60 enemies and the spells in #4/#27) finish on time. |
 | Review PRs within 24 hours (from the Sprint 1 observation) | Whole team | No. A PR again waited more than a day for approval (PR #77). | No. It was only a verbal agreement made in planning, so nothing enforced it. See sections 5 and 7. |
 | Break work into tasks of 2.5 hours or less | Whole team | Yes. Every story was split into owned tasks of 2.5 hours or less. | Yes. We completed all 15 committed points, compared with 15 of 28 in Sprint 1. |
@@ -36,7 +36,7 @@
 ### What went well
 - **(Jason)** We finished all 15 points we planned this sprint.
 - **(Kevin)** World generation is finally done after not getting finished in Sprint 1. Breaking it into two smaller pieces, the tile map (#2) and the generated floor (#3a), and having Luke and me work on it together is what got it done.
-- **(Matthew)** Everything we promised for the sprint goal works. A player can pick an element, walk around a generated dungeon floor, fight enemies with spells, and see their HP change on screen.
+- **(Matthew)** Everything we promised for the sprint goal works. A player can pick an element, walk around a generated dungeon floor, fight enemies with spells, and see their HP on screen.
 - **(Jason)** Building the player stats first (#21 and #61) was a good call. Enemies and spells both needed stats to work, so having them done early meant nobody got stuck waiting.
 - **(Luke)** Once GitHub was back up, our automatic tests on GitHub didn't fail once. All 19 runs passed this sprint.
 
