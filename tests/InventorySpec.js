@@ -230,13 +230,13 @@ describe("Developer menu inventory testing controls", function () {
         const player = new Player(100,100);
         const menu = new DeveloperMenu(player, { getTextSize: () => 18 }, storage, inventory);
         menu.toggle();
-        for (let i = 0; i < 4; i++) menu.handleInput("s");
+        for (let i = 0; i < menu.settings.length; i++) menu.handleInput("s");
         return { menu, inventory, storage, player };
     }
 
-    it("shows inventory counts after the four movement controls", function () {
+    it("shows inventory counts after the developer settings", function () {
         const { menu } = setupDev();
-        expect(menu.selectedSetting).toBe(4);
+        expect(menu.selectedSetting).toBe(menu.settings.length);
     });
 
     it("increases and decreases potion counts with D/A", function () {

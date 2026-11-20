@@ -8,6 +8,7 @@ import { LightingRenderer } from "./lightingRenderer.js";
 import { SpellCaster } from "./spellCaster.js";
 import { SpriteSheet } from "./spellEffects.js";
 import { LightOrb } from "./lightOrb.js";
+import { XpDrop } from "./xpDrop.js";
 import { createRandom, generateWorld } from "./worldGenerator.js";
 import { WorldRenderer } from "./worldRenderer.js";
 import { Camera } from "./camera.js";
@@ -24,6 +25,8 @@ let playerSpriteSheet;
 let enemySpriteSheet;
 let enemyItemSprites = {};
 let enemyProjectiles = [];
+let enemyBombs = [];
+let xpDrops = [];
 let enemySprites;
 let enemies = [];
 let lighting;
@@ -39,6 +42,8 @@ let walls;
 let statBars;
 let hotkeyMessage = "";
 let hotkeyMessageFrames = 0;
+let heldSliderDirection = 0;
+let heldSliderFrames = 0;
 let selectedClass = null;
 let HP, ATK, DEF, MP;
 
@@ -119,7 +124,7 @@ function setup() {
     lightOrb = new LightOrb(player.x, player.y);
     menu = new Menu();
     inventory = new Inventory();
-    developerMenu = new DeveloperMenu(player, menu, localStorage, inventory);
+    developerMenu = new DeveloperMenu(player, menu, localStorage, inventory, camera);
     inventoryMenu = new InventoryMenu(inventory, menu);
     lighting = new LightingRenderer(width, height);
     spellCaster = new SpellCaster({
@@ -142,6 +147,8 @@ function createWorld() {
     walls = new WallCollider(world, TILE_SIZE);
     enemies = spawnEnemies(world, TILE_SIZE, enemySprites);
     enemyProjectiles = [];
+    enemyBombs = [];
+    xpDrops = [];
 
     // Each torch hangs just below the wall line of its tile, flickering out of sync.
     torches = world.torches.map(({ col, row }, i) =>
@@ -313,6 +320,25 @@ function mousePressed() {
     }
 }
 
+/** Repeat held slider keys after an initial delay; never auto-repeat test stats. */
+function updateHeldSlider() {
+    const active = developerMenu.isOpen ? developerMenu : menu.isOpen ? menu : null;
+    const adjustable = active && (active === menu || active.selectedSetting < active.settings.length);
+    const left = keyIsDown(65);
+    const right = keyIsDown(68);
+    const direction = adjustable && left !== right ? (left ? -1 : 1) : 0;
+    if (direction !== heldSliderDirection) {
+        heldSliderDirection = direction;
+        heldSliderFrames = 0;
+    }
+    if (!direction) return;
+    heldSliderFrames++;
+    // The first step already happens in keyPressed; avoid repeating a quick tap.
+    if (heldSliderFrames >= 16 && (heldSliderFrames - 16) % 6 === 0) {
+        active.changeSetting(direction);
+    }
+}
+
 /** Main game loop; all menus freeze movement and momentum. */
 function draw() {
     const paused = selectedClass === null || menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
@@ -323,13 +349,24 @@ function draw() {
         // Same 60 FPS frame units the player uses, so spells keep pace with movement.
         const frameScale = deltaTime > 0 ? Math.min(deltaTime / (1000 / 60), 3) : 1;
         for (const enemy of enemies) {
-            const landed = enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
+            enemy.hitFlash = Math.max(0, enemy.hitFlash - frameScale);
+            const swooping = enemy.updateBatSwoop(player, world, TILE_SIZE, walls, enemies, frameScale);
+            const rushing = enemy.updateGoblinRush(player, world, TILE_SIZE,
+                walls, enemies, enemyBombs, frameScale);
+            const landed = swooping || rushing ? false : enemy.updateWander(world, TILE_SIZE, walls, enemies, frameScale);
             enemy.updateSlimeAttack(player, enemyProjectiles, landed);
             enemy.updateSkeletonAttack(player, enemyProjectiles, frameScale);
+            enemy.updateGoblinAttack(player, enemyProjectiles, frameScale);
         }
         for (const shot of enemyProjectiles) shot.update(frameScale, walls, world, TILE_SIZE, player);
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
-        spellCaster.update(frameScale, worldWidth(), worldHeight());
+        for (const bomb of enemyBombs) bomb.update(frameScale, player, walls, world, TILE_SIZE);
+        enemyBombs = enemyBombs.filter(bomb => !bomb.done);
+        spellCaster.update(frameScale, worldWidth(), worldHeight(), enemies, dead => {
+            xpDrops.push(new XpDrop(dead.x + dead.size / 2, dead.y + dead.size / 2));
+        });
+        for (const drop of xpDrops) drop.collect(player);
+        xpDrops = xpDrops.filter(drop => !drop.collected);
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
         player.stats.update(frameScale);
@@ -339,14 +376,17 @@ function draw() {
         player.stop();
     }
 
+    updateHeldSlider();
+
     background(...VOID_COLOR);
 
     // The world and player are drawn through the camera, in world pixels.
     push();
     camera.apply();
     worldRenderer.display();
-    for (const enemy of enemies) if (enemy.isAlive()) enemy.display();
+    for (const enemy of enemies) if (enemy.isAlive()) enemy.display(enemyItemSprites);
     for (const shot of enemyProjectiles) shot.display(enemyItemSprites);
+    for (const bomb of enemyBombs) bomb.display(enemyItemSprites);
     player.display();
     pop();
 
@@ -356,6 +396,7 @@ function draw() {
     push();
     camera.apply();
     for (const torch of torches) torch.display();
+    for (const drop of xpDrops) drop.display();
     spellCaster.display();
     lightOrb.display();
     pop();
@@ -436,6 +477,8 @@ function toggleGameMenu(which) {
         if (other.isOpen) other.toggle();
     }
     if (shouldOpen) target.toggle();
+    heldSliderDirection = 0;
+    heldSliderFrames = 0;
     player.stop();
 }
 
@@ -461,10 +504,11 @@ function keyPressed(event) {
             if (!event || !event.repeat) inventoryMenu.handleSpace();
             return false;
         }
-        // Keep W/S navigation one row per key press, just like the Q menu.
-        if (event && event.repeat && (pressedKey === "w" || pressedKey === "s")) {
+        // OS key repeat must not compete with our controlled A/D hold logic.
+        if (event && event.repeat && ["w", "s", "a", "d"].includes(pressedKey)) {
             return false;
         }
+        if (["w", "s"].includes(pressedKey)) heldSliderFrames = 0;
         activeMenu.handleInput(pressedKey);
         return false;
     }

@@ -12,6 +12,7 @@ describe("Enemy room spawning", function () {
         const enemies = spawnEnemies(world, 25, {}, () => 0.5);
         expect(enemies.length).toBe(1);
         expect(enemies[0] instanceof Enemy).toBe(true);
+        expect(enemies[0].maxHealth).toBe(2);
         expect(enemies[0].x).toBeGreaterThan(9 * 25);
     });
 

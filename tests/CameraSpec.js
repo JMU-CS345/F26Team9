@@ -71,6 +71,22 @@ describe("Camera", function () {
         expect(y * camera.zoom).toBe(Math.round(y * camera.zoom));
     });
 
+    it("keeps bounds and screen coordinates correct when zoom changes", function () {
+        const camera = makeCamera();
+        camera.snapTo(1000, 500);
+        camera.setZoom(4);
+        expect(camera.zoom).toBe(4);
+        expect(camera.toScreen(1010, 500)).toEqual([440, 300]);
+        camera.snapTo(0, 0);
+        expect(camera.x).toBe(100);
+        expect(camera.y).toBe(75);
+        camera.setZoom(1);
+        expect(camera.x).toBe(400);
+        expect(camera.y).toBe(300);
+        camera.setZoom(-1);
+        expect(camera.zoom).toBe(1);
+    });
+
     it("reports how far the world has scrolled on screen", function () {
         const camera = makeCamera();
         camera.snapTo(1000, 500);
