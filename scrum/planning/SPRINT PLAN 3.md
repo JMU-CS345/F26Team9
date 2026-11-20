@@ -24,7 +24,7 @@ At the review we will demo this in the deployed build: take damage from an enemy
 
 ## 3. Capacity and Velocity
 
-**Sprint dates:** 11/19 to 12/2. We are working remotely the week of Thanksgiving (11/23 to 11/27), and will still have a few days working in-person.
+**Sprint dates:** 11/19 to 12/4. We are working remotely the week of Thanksgiving (11/23 to 11/27), and will still have a few days working in-person.
 
 **Velocity last sprint:** 12
 
@@ -32,15 +32,15 @@ At the review we will demo this in the deployed build: take damage from an enemy
 
 **Known absences or reduced availability this sprint:** Thanksgiving break (11/23 to 11/27) will have team members less available, otherwise none planned.
 
-**Points committed this sprint:** 19 (about 10 hours per member)
+**Points committed this sprint:** 19 (about 9 hours per member)
 
 **Why this commitment is realistic:**
 We are committing 19 points, which is more than our average velocity (13.5) and last sprint's velocity (12). We chose to take this on for three reasons:
 - Two stories build on work that's already done. #26 finishes enemy damage, which was mostly built in Sprint 2. #5 connects the stats object from #61 to the UI.
 - The stakeholder asked us to prioritize combat. The miniboss (#18) and XP and leveling (#12) make fighting enemies worth it.
-- The sprint runs two calendar weeks (11/19 to 12/2), with Thanksgiving week off in the middle, so members can work extra on either side of the break.
+- The sprint runs two calendar weeks (11/19 to 12/4), with Thanksgiving week off in the middle, so members can work extra on either side of the break.
 
-The tasks add up to about 40.5 hours, or roughly 10 hours per person. That's about 3 hours more each than in Sprint 2. If we fall behind, we drop #16 first, then #12. Without both, the plan is 12 points, the same as last sprint's velocity.
+The tasks add up to about 35 hours, or roughly 9 hours per person. That's about 2 hours more each than in Sprint 2. If we fall behind, we drop #16 first, then #12. Without both, the plan is 12 points, the same as last sprint's velocity.
 
 ---
 
@@ -48,15 +48,15 @@ The tasks add up to about 40.5 hours, or roughly 10 hours per person. That's abo
 
 | Issue # | User story | Estimate | Owner | Ready? |
 |---------|------------|----------|-------|--------|
-| #26 | As a player, I take damage when an enemy touches me so that fights are dangerous. | 2 pts (4h) | TBD | [x] |
-| #8 | As a player, I find chests in the dungeon that give me rewards so that exploring is worth it. | 3 pts (6h) | Matthew | [x] |
-| #101 (new) | As a player, I defeat every enemy on a floor to unlock its exit so that I can move on to the next floor. | 3 pts (7h) | TBD | [x] |
-| #5 | As a player, I see my real HP, attack, and defense on screen so that I always know my current stats. | 1 pt (3.5h) | Jason + Matthew | [x] |
-| #16 | As a player, I travel between the dungeon and a safe base area so that I have a place to trade and upgrade between runs. (First slice: the base area and travel to and from it) | 4 pts (7h) | TBD | [x] |
-| #18 | As a player, I want a miniboss in each dungeon, so that each dungeon has a real goal. | 3 pts (6h) | TBD | [x] |
-| #12 | As a player, I want to earn XP and level up, so that my mage becomes stronger as I progress. | 3 pts (7h) | TBD | [x] |
+| #26 | As a player, I take damage when an enemy touches me so that fights are dangerous. | 2 pts (3h) | Kevin | [x] |
+| #8 | As a player, I find chests in the dungeon that give me rewards so that exploring is worth it. | 3 pts (5.5h) | Matthew | [x] |
+| #101 (new) | As a player, I defeat every enemy on a floor to unlock its exit so that I can move on to the next floor. | 3 pts (6.5h) | Luke | [x] |
+| #5 | As a player, I see my real HP, attack, and defense on screen so that I always know my current stats. | 1 pt (3h) | Jason + Matthew | [x] |
+| #16 | As a player, I travel between the dungeon and a safe base area so that I have a place to trade and upgrade between runs. (First slice: the base area and travel to and from it) | 4 pts (6h) | Luke + Matthew | [x] |
+| #18 | As a player, I want a miniboss , so that theres a real goal. | 3 pts (5h) | Kevin | [x] |
+| #12 | As a player, I want to earn XP and level up, so that my mage becomes stronger as I progress. | 3 pts (6h) | Jason | [x] |
 
-**Total points:** 19 (about 40.5 hours of tasks)
+**Total points:** 19 (about 35 hours of tasks)
 
 **Acceptance criteria:**
 
@@ -106,51 +106,51 @@ The tasks add up to about 40.5 hours, or roughly 10 hours per person. That's abo
 
 ## 5. Task Breakdown
 
-### Issue #26: Enemy attacks (4h)
-- [ ] Detect contact between an enemy and the player. (TBD, 1h)
-- [ ] Call takeDamage() on contact, with a damage cooldown. (TBD, 1h)
-- [ ] Review code and test in the deployed build. (TBD, 1h)
-
-### Issue #8: Chests with rewards (6h)
-- [ ] Draw 8-bit sprites for a closed and an open chest. (TBD, 1h)
-- [ ] Create a Chest class and place chests in generated rooms. (TBD, 1.5h)
-- [ ] Add the interact key to open a chest, and list it in the in-game controls. (TBD, 1h)
-- [ ] Apply the chest's reward to the player's stats. (TBD, 1h)
+### Issue #26: Enemy attacks (3h)
+- [ ] Detect contact between an enemy and the player. (Kevin, 1h)
+- [ ] Call takeDamage() on contact, with a damage cooldown. (Kevin, 1h)
 - [ ] Review code and test in the deployed build. (Jason, 1h)
 
-### Issue #101: Level exit (7h)
+### Issue #8: Chests with rewards (5.5h)
+- [ ] Draw 8-bit sprites for a closed and an open chest. (Matthew, 1h)
+- [ ] Create a Chest class and place chests in generated rooms. (Matthew, 1.5h)
+- [ ] Add the interact key to open a chest, and list it in the in-game controls. (Matthew, 1h)
+- [ ] Apply the chest's reward to the player's stats. (Matthew, 1h)
+- [ ] Review code and test in the deployed build. (Jason, 1h)
+
+### Issue #101: Level exit (6.5h)
 - [ ] Draw 8-bit tiles for a locked and an unlocked exit. (Matthew, 0.5h)
-- [ ] Place the exit in a room other than the starting room. (TBD, 1.5h)
-- [ ] Track how many enemies are left on the floor, and unlock the exit when it reaches 0. (TBD, 1h)
-- [ ] When the player steps on the unlocked exit, generate the next floor and move the player to its starting room. (TBD, 1.5h)
-- [ ] Show the floor number on screen and keep the player's stats between floors. (TBD, 1h)
+- [ ] Place the exit in a room other than the starting room. (Luke, 1.5h)
+- [ ] Track how many enemies are left on the floor, and unlock the exit when it reaches 0. (Luke, 1h)
+- [ ] When the player steps on the unlocked exit, generate the next floor and move the player to its starting room. (Luke, 1.5h)
+- [ ] Show the floor number on screen and keep the player's stats between floors. (Kevin, 1h)
 - [ ] Review code and test in the deployed build. (Matthew, 1h)
 
-### Issue #5: Stats on screen match the real stats (3.5h)
-- [ ] Merge the UI code with the stats code so stats are stored in one place. (TBD, 1h)
-- [ ] Make the on-screen HP, attack, and defense read from the Player stats object. (TBD, 1h)
+### Issue #5: Stats on screen match the real stats (3h)
+- [ ] Merge the UI code with the stats code so stats are stored in one place. (Jason, 1h)
+- [ ] Make the on-screen HP, attack, and defense read from the Player stats object. (Matthew, 1h)
 - [ ] Review code and test in the deployed build. (Luke, 1h)
 
-### Issue #16: Base area and travel (7h)
-- [ ] Draw 8-bit floor and wall tiles and shop/upgrade props for the base area. (TBD, 1.5h)
-- [ ] Build the base area as its own tile map with no enemies. (TBD, 1h)
-- [ ] Send the player to the base area after the last floor of a run. (TBD, 1.5h)
-- [ ] Add a door or portal in the base area that starts a new run. (TBD, 1h)
+### Issue #16: Base area and travel (6h)
+- [ ] Draw 8-bit floor and wall tiles and shop/upgrade props for the base area. (Matthew, 1.5h)
+- [ ] Build the base area as its own tile map with no enemies. (Luke, 1h)
+- [ ] Send the player to the base area after the last floor of a run. (Luke, 1.5h)
+- [ ] Add a door or portal in the base area that starts a new run. (Luke, 1h)
 - [ ] Review code and test in the deployed build. (Kevin, 1h)
 
-### Issue #18: Miniboss per dungeon (6h)
+### Issue #18: Miniboss per dungeon (5h)
 - [ ] Draw an 8-bit miniboss sprite. (Matthew, 1h)
-- [ ] Create a Miniboss based on the Enemy class, with more HP and damage. (TBD, 1h)
-- [ ] Place one miniboss in the exit room on the dungeon's last floor. (TBD, 1h)
-- [ ] Give the player a reward when the miniboss is defeated (for example, it drops a chest from #8). (TBD, 1h)
-- [ ] Review code and test in the deployed build. (TBD, 1h)
+- [ ] Create a Miniboss based on the Enemy class, with more HP and damage. (Kevin, 1h)
+- [ ] Place one miniboss in the exit room on the dungeon's last floor. (Kevin, 1h)
+- [ ] Give the player a reward when the miniboss is defeated (for example, it drops a chest from #8). (Kevin, 1h)
+- [ ] Review code and test in the deployed build. (Jason, 1h)
 
-### Issue #12: XP and leveling (7h)
-- [ ] Give the player XP when they defeat an enemy. (TBD, 1h)
-- [ ] Show the XP bar and current level with the on-screen stats. (TBD, 1h)
-- [ ] When the XP bar fills, raise the player's level, reset the bar, and boost their stats. (TBD, 1.5h)
-- [ ] When the player's HP reaches 0, they die: current XP is cleared, their level is kept, and the run restarts. (TBD, 1.5h)
-- [ ] Review code and test in the deployed build. (TBD, 1h)
+### Issue #12: XP and leveling (6h)
+- [ ] Give the player XP when they defeat an enemy. (Jason, 1h)
+- [ ] Show the XP bar and current level with the on-screen stats. (Jason, 1h)
+- [ ] When the XP bar fills, raise the player's level, reset the bar, and boost their stats. (Jason, 1.5h)
+- [ ] When the player's HP reaches 0, they die: current XP is cleared, their level is kept, and the run restarts. (Jason, 1.5h)
+- [ ] Review code and test in the deployed build. (Kevin, 1h)
 
 ---
 
@@ -158,13 +158,13 @@ The tasks add up to about 40.5 hours, or roughly 10 hours per person. That's abo
 
 | Member | Stories owned | Points |
 |--------|---------------|--------|
-| Jason Waddell | TBD | TBD |
-| Matthew Creighton | TBD | TBD |
-| Luke Bonnell | TBD | TBD |
-| Kevin Scafe | TBD | TBD |
+| Jason Waddell | #12 XP and leveling; #5 Stats on screen (shared) | 3 + 0.5 |
+| Matthew Creighton | #8 Chests; #5 Stats on screen (shared); #16 Base area (shared) | 3 + 0.5 + 2 |
+| Luke Bonnell | #101 Level exit; #16 Base area (shared) | 3 + 2 |
+| Kevin Scafe | #26 Enemy attacks; #18 Miniboss | 2 + 3 |
 
 *If the work is not balanced, explain why:*
-TBD once owners are assigned. Our goal is to keep everyone at about 7 hours.
+Points are uneven, but hours are balanced: everyone has between 8 and 9.5 hours. Jason has the fewest points, so he makes up the hours by reviewing three stories (#8, #26, #18). Matthew has the most hours because he draws the 8-bit art for #101, #16, and #18 on top of his own stories.
 
 ---
 
@@ -210,7 +210,7 @@ TBD once owners are assigned. Our goal is to keep everyone at about 7 hours.
 
 - [x] Sprint goal written
 - [x] Every committed story meets the Definition of Ready
-- [ ] Every story has an owner
+- [x] Every story has an owner
 - [ ] Board updated: committed stories in the sprint, tasks created
 - [x] Commitment compared to velocity
 - [ ] Report committed to `scrum/planning/` via pull request
