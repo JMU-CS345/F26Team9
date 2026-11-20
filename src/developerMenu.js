@@ -10,7 +10,8 @@ export class DeveloperMenu {
      * @param {Menu} menu - Normal menu, used to match its text size.
      * @param {Storage} storage - Optional storage substitute for unit tests.
      */
-    constructor(player, menu, storage = localStorage, inventory = null) {
+    constructor(player, menu, storage = localStorage, inventory = null, camera = null) {
+        this.camera = camera;
         this.player = player;
         this.menu = menu;
         this.storage = storage;
@@ -24,7 +25,8 @@ export class DeveloperMenu {
             { key: "friction", label: "Ground Friction", min: 0.05, max: 0.90, step: 0.05, value: 0.25 },
             { key: "speed", label: "Base Speed", min: 0.5, max: 8, step: 0.25, value: 2 },
             { key: "acceleration", label: "Acceleration", min: 0.10, max: 2, step: 0.05, value: 0.75 },
-            { key: "animationDelay", label: "Walk Frame Delay", min: 3, max: 16, step: 1, value: 8 }
+            { key: "animationDelay", label: "Walk Frame Delay", min: 3, max: 16, step: 1, value: 8 },
+            { key: "zoom", label: "Camera Zoom", min: 1, max: 4, step: 0.25, value: 3 }
         ];
 
         // Test controls for the stat bars, until enemies can deal damage.
@@ -109,7 +111,11 @@ export class DeveloperMenu {
     /** Applies the four tuning values directly to the current player. */
     applySettings() {
         for (const setting of this.settings) {
-            this.player[setting.key] = setting.value;
+            if (setting.key === "zoom") {
+                if (this.camera) this.camera.setZoom(setting.value);
+            } else {
+                this.player[setting.key] = setting.value;
+            }
         }
     }
 
@@ -166,6 +172,7 @@ export class DeveloperMenu {
         let valueText = setting.value.toFixed(2);
         if (setting.key === "friction") valueText = Math.round(setting.value * 100) + "%";
         if (setting.key === "animationDelay") valueText = String(setting.value);
+        if (setting.key === "zoom") valueText = setting.value.toFixed(2) + "x";
 
         fill(255);
         textAlign(LEFT, CENTER);

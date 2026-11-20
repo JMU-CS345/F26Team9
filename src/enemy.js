@@ -1,5 +1,6 @@
 import { Entity } from "./entity.js";
 import { EnemyProjectile } from "./enemyProjectile.js";
+import { EnemyBomb } from "./enemyBomb.js";
 
 // Resolve the existing sprite sheet relative to this module for Vite builds.
 export const ENEMY_SPRITE_PATH = new URL("./enemy_sprites (1).png", import.meta.url).href;
@@ -74,7 +75,7 @@ export function spawnEnemies(world, tileSize, spritesByType, random = Math.rando
         const speed = 0.85 + 0.3 * random();
         enemies.push(new Enemy((col + 0.5) * tileSize - SPRITE_SIZE / 2,
             (row + 0.5) * tileSize - SPRITE_SIZE / 2,
-            spritesByType[type] || {}, { type, speed, random, health: 3 + i % 3 }));
+            spritesByType[type] || {}, { type, speed, random, health: 2 }));
     }
     return enemies;
 }
@@ -91,12 +92,18 @@ export class Enemy extends Entity {
         super(x, y, SPRITE_SIZE, stats.speed ?? 1, sprites);
         this.maxHealth = stats.health ?? 3;
         this.health = this.maxHealth;
+        this.hitFlash = 0;
         this.damage = stats.damage ?? 1;
         this.type = stats.type ?? "skeleton";
         this.random = stats.random ?? Math.random;
         // Stagger first throws so spawned skeletons do not all fire together.
         this.throwCooldown = 60 + this.random() * 60;
         this.hopPause = 0; // Slimes briefly rest after each completed hop.
+        this.swoopCooldown = 120 + this.random() * 90;
+        this.swoopFrames = 0;
+        this.knifeCooldown = this.type === "goblin" ? 90 + this.random() * 90 : 0;
+        this.rushCooldown = 180 + this.random() * 120;
+        this.rushFrames = 0;
         this.placeholderColor = [180, 60, 60];
     }
 
@@ -181,6 +188,74 @@ export class Enemy extends Entity {
         this.updateDirection(dx, dy);
     }
 
+    /** Goblins throw knives while wandering instead of chasing the player. */
+    updateGoblinAttack(player, projectiles, frameScale = 1) {
+        if (this.type !== "goblin" || !this.isAlive()) return;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
+        if (!time || this.rushFrames > 0 || (player.stats && !player.stats.isAlive())) return;
+        this.knifeCooldown -= time;
+        if (this.knifeCooldown > 0) return;
+
+        const x = this.x + this.size / 2;
+        const y = this.y + this.size / 2;
+        const dx = player.x + player.size / 2 - x;
+        const dy = player.y + player.size / 2 - y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 1 || distance > 220) return;
+
+        projectiles.push(new EnemyProjectile(x, y, dx, dy, "knife", this.damage));
+        this.knifeCooldown = 150; // Two and a half seconds at 60 FPS.
+        this.updateDirection(dx, dy);
+    }
+
+    /** Rush toward a nearby player, dropping one timed bomb when the rush ends. */
+    updateGoblinRush(player, world, tileSize, walls, others = [], bombs = [], frameScale = 1) {
+        if (this.type !== "goblin" || !this.isAlive()) return false;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
+        if (!time) return this.rushFrames > 0;
+        if (player.stats && !player.stats.isAlive()) return false;
+        if (this.rushFrames <= 0) {
+            this.rushCooldown -= time;
+            if (this.rushCooldown > 0) return false;
+            const dx = player.x + player.size / 2 - this.x - this.size / 2;
+            const dy = player.y + player.size / 2 - this.y - this.size / 2;
+            const distance = Math.hypot(dx, dy);
+            if (distance < 35 || distance > 180) return false;
+            this.rushDx = dx / distance;
+            this.rushDy = dy / distance;
+            this.rushFrames = 24;
+            this.rushCooldown = 300;
+            this.wanderTarget = null;
+        }
+        const travel = Math.min(time, this.rushFrames) * 5;
+        const steps = Math.ceil(travel / 2); // Check collision in small steps.
+        for (let i = 0; i < steps; i++) {
+            const toPlayer = Math.hypot(player.x - this.x, player.y - this.y);
+            if (toPlayer <= 36) { this.rushFrames = 0; break; }
+            const x = this.x + this.rushDx * travel / steps;
+            const y = this.y + this.rushDy * travel / steps;
+            const corners = [[0, 0], [this.size, 0], [0, this.size], [this.size, this.size]];
+            const floor = corners.every(([ox, oy]) => world.isFloor(
+                Math.floor((x + ox - (ox ? 0.01 : 0)) / tileSize),
+                Math.floor((y + oy - (oy ? 0.01 : 0)) / tileSize)));
+            const overlap = others.some(other => other !== this && other.isAlive() &&
+                x < other.x + other.size && x + this.size > other.x &&
+                y < other.y + other.size && y + this.size > other.y);
+            if (!floor || overlap || walls.hits({ x, y, w: this.size, h: this.size }).length) {
+                this.rushFrames = 0;
+                break;
+            }
+            this.x = x;
+            this.y = y;
+        }
+        this.rushFrames = Math.max(0, this.rushFrames - time);
+        this.updateDirection(this.rushDx, this.rushDy);
+        this.updateAnimation(true, time);
+        if (!this.rushFrames) bombs.push(new EnemyBomb(
+            this.x + this.size / 2, this.y + this.size / 2, this.damage));
+        return true;
+    }
+
     /** Two bouncing slime balls spread toward the player on each landing. */
     updateSlimeAttack(player, projectiles, landed) {
         if (this.type !== "slime" || !this.isAlive() || !landed) return;
@@ -195,18 +270,88 @@ export class Enemy extends Entity {
         }
     }
 
-    /** Use the existing lifted slime sprite while hopping. */
+    /** Rush along a fixed direction, checking walls and other enemies each step. */
+    updateBatSwoop(player, world, tileSize, walls, others = [], frameScale = 1) {
+        if (this.type !== "bat" || !this.isAlive()) return false;
+        const time = Number.isFinite(frameScale) ? Math.max(0, Math.min(frameScale, 3)) : 0;
+        if (!time) return this.swoopFrames > 0;
+        if (this.swoopFrames <= 0) {
+            this.swoopCooldown -= time;
+            if (this.swoopCooldown > 0) return false;
+            if (player.stats && !player.stats.isAlive()) return false;
+            const dx = player.x + player.size / 2 - this.x - this.size / 2;
+            const dy = player.y + player.size / 2 - this.y - this.size / 2;
+            const distance = Math.hypot(dx, dy);
+            if (distance < 1 || distance > 200) return false;
+            this.swoopDx = dx / distance;
+            this.swoopDy = dy / distance;
+            this.swoopFrames = 25;
+            this.swoopCooldown = 180;
+            this.swoopHit = false;
+            this.wanderTarget = null;
+        }
+        const travel = Math.min(time, this.swoopFrames) * 8;
+        const steps = Math.ceil(travel / 2); // Don't skip narrow walls or player hits.
+        for (let i = 0; i < steps; i++) {
+            const x = this.x + this.swoopDx * travel / steps;
+            const y = this.y + this.swoopDy * travel / steps;
+            const corners = [[0, 0], [this.size, 0], [0, this.size], [this.size, this.size]];
+            const floor = corners.every(([ox, oy]) => world.isFloor(
+                Math.floor((x + ox - (ox ? 0.01 : 0)) / tileSize),
+                Math.floor((y + oy - (oy ? 0.01 : 0)) / tileSize)));
+            const overlap = others.some(other => other !== this && other.isAlive() &&
+                x < other.x + other.size && x + this.size > other.x &&
+                y < other.y + other.size && y + this.size > other.y);
+            if (!floor || overlap || walls.hits({ x, y, w: this.size, h: this.size }).length) {
+                this.swoopFrames = 0;
+                break;
+            }
+            this.x = x;
+            this.y = y;
+            if (!this.swoopHit && (!player.stats || player.stats.isAlive()) &&
+                Math.hypot(this.x + this.size / 2 - player.x - player.size / 2,
+                    this.y + this.size / 2 - player.y - player.size / 2) < this.size / 2 + player.size * 0.35) {
+                player.takeDamage(this.damage);
+                this.swoopHit = true; // Only once during this rush.
+            }
+        }
+        this.swoopFrames = Math.max(0, this.swoopFrames - time);
+        this.updateDirection(this.swoopDx, this.swoopDy);
+        this.updateAnimation(this.swoopFrames > 0, time);
+        return true;
+    }
+
+    /** Use the lifted enemy sprite during slime hops and bat swoops. */
     getCurrentSprite() {
         const frames = this.sprites[this.direction];
-        if (this.type === "slime" && this.isMoving && Array.isArray(frames) && frames[2]) {
+        if (((this.type === "slime" && this.isMoving) ||
+            (this.type === "bat" && this.swoopFrames > 0)) && Array.isArray(frames) && frames[2]) {
             return frames[2];
         }
         return super.getCurrentSprite();
     }
 
+    /** Draw the purple echo frames in front of a swooping bat. */
+    display(items = {}) {
+        push();
+        if (this.hitFlash > 0) tint(255, 60, 60);
+        super.display();
+        pop();
+        if (this.type !== "bat" || this.swoopFrames <= 0 || !items.echo?.length) return;
+        const frame = items.echo[Math.floor(this.swoopFrames / 3) % items.echo.length];
+        push();
+        imageMode(CENTER);
+        image(frame, this.x + this.size / 2 + this.swoopDx * 18,
+            this.y + this.size / 2 + this.swoopDy * 18, 20, 20);
+        pop();
+    }
+
     /** Lowers health without allowing it to go below zero. */
     takeDamage(amount) {
-        if (amount > 0) this.health = Math.max(0, this.health - amount);
+        if (amount > 0 && this.isAlive()) {
+            this.health = Math.max(0, this.health - amount);
+            this.hitFlash = 12;
+        }
     }
 
     /** @returns {boolean} Whether this enemy still has health remaining. */
