@@ -211,6 +211,6 @@ Points are uneven, but hours are balanced: everyone has between 8 and 9.5 hours.
 - [x] Sprint goal written
 - [x] Every committed story meets the Definition of Ready
 - [x] Every story has an owner
-- [ ] Board updated: committed stories in the sprint, tasks created
+- [x] Board updated: committed stories in the sprint, tasks created
 - [x] Commitment compared to velocity
 - [x] Report committed to `scrum/planning/` via pull request
