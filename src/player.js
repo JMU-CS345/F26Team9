@@ -15,16 +15,43 @@ export class PlayerStats {
     static HEALTH_PER_LEVEL = 10;
     static MANA_PER_LEVEL = 10;
 
+    // Starting stats for each wizard class, chosen from the class popup.
+    static CLASSES = {
+        Fire: { maxHealth: 100, maxMana: 30, attack: 50, defense: 10 },
+        Mind: { maxHealth: 70, maxMana: 50, attack: 70, defense: 7 },
+        Earth: { maxHealth: 150, maxMana: 30, attack: 50, defense: 20 }
+    };
+
     /**
-     * @param {Object} start - Optional starting {maxHealth, maxMana}.
+     * @param {Object} start - Optional starting {maxHealth, maxMana, attack, defense}.
      */
     constructor(start = {}) {
         this.maxHealth = start.maxHealth ?? 100;
         this.health = this.maxHealth;
         this.maxMana = start.maxMana ?? 50;
         this.mana = this.maxMana;
+        this.attack = start.attack ?? 0;
+        this.defense = start.defense ?? 0;
+        this.wizardClass = null;
         this.level = 1;
         this.experience = 0;
+    }
+
+    /**
+     * Sets max health, max mana, attack, and defense from a wizard class, and
+     * refills health and mana to the new maximums.
+     * @param {string} wizardClass - "Fire", "Mind", or "Earth".
+     */
+    applyClass(wizardClass) {
+        const base = PlayerStats.CLASSES[wizardClass];
+        if (!base) throw new Error("Choose Fire, Mind, or Earth.");
+        this.wizardClass = wizardClass;
+        this.maxHealth = base.maxHealth;
+        this.health = base.maxHealth;
+        this.maxMana = base.maxMana;
+        this.mana = base.maxMana;
+        this.attack = base.attack;
+        this.defense = base.defense;
     }
 
     /** @returns {number} Experience needed to finish the current level. */
