@@ -45,7 +45,6 @@ let hotkeyMessageFrames = 0;
 let heldSliderDirection = 0;
 let heldSliderFrames = 0;
 let selectedClass = null;
-let HP, ATK, DEF, MP;
 
 
 // The PNG is 512 x 128: eight 64 x 64 columns, two animation rows.
@@ -212,52 +211,23 @@ function drawHotbar() {
     pop();
 }
 
-/** Displays primitive stats from the selected wizard class. */
+/** Displays the player's live stats, the same values the stat bars show. */
 function drawWizardStats() {
+    if (selectedClass === null) return;
+    const stats = player.stats;
     push();
     const x = 1050;
     const y = 25;
-    fill(38, 34, 48, 220);
-    stroke(190, 160, 110);
-    strokeWeight(1);
     noStroke();
     fill(255);
     textAlign(LEFT, TOP);
     textSize(14);
-    text("Mage Stats", x + 10, y + 8);
+    text(selectedClass + " Mage  (Lv " + stats.level + ")", x + 10, y + 8);
     textSize(12);
-    if (selectedClass == "Fire") {
-        HP = 100;
-        MP = 30;
-        ATK = 50;
-        DEF = 10;
-        text("HP:" + HP, x + 10, y + 28);
-        text("MP: " + MP, x + 10, y + 48);
-        text("ATK: " + ATK, x + 10, y + 68);
-        text("DEF: " + DEF, x + 10, y + 88);
-    }
-
-    else if (selectedClass == "Mind") {
-        HP = 70;
-        MP = 50;
-        ATK = 70;
-        DEF = 7;
-        text("HP:" + HP, x + 10, y + 28);
-        text("MP: " + MP, x + 10, y + 48);
-        text("ATK: " + ATK, x + 10, y + 68);
-        text("DEF: " + DEF, x + 10, y + 88);
-    }
-
-    else if (selectedClass == "Earth") {
-        HP = 150;
-        MP = 30;
-        ATK = 50;
-        DEF = 20;
-        text("HP:" + HP, x + 10, y + 28);
-        text("MP: " + MP, x + 10, y + 48);
-        text("ATK: " + ATK, x + 10, y + 68);
-        text("DEF: " + DEF, x + 10, y + 88);
-    }
+    text("HP: " + Math.ceil(stats.health) + " / " + stats.maxHealth, x + 10, y + 28);
+    text("MP: " + Math.floor(stats.mana) + " / " + stats.maxMana, x + 10, y + 48);
+    text("ATK: " + stats.attack, x + 10, y + 68);
+    text("DEF: " + stats.defense, x + 10, y + 88);
     pop();
 }
 
@@ -317,6 +287,9 @@ function mousePressed() {
         && mouseX <= buttonStartX + index * (buttonWidth + buttonGap) + buttonWidth
         && mouseY >= buttonY && mouseY <= buttonY + 42) {
         selectedClass = classes[index];
+        player.stats.applyClass(selectedClass);
+        // Fresh bars, so the new maximums don't read as damage or a level-up.
+        statBars = new StatBars(player.stats);
     }
 }
 
