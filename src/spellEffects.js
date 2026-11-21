@@ -350,8 +350,12 @@ export class LightningStrike {
      * @param {number} x2 - End x-coordinate.
      * @param {number} y2 - End y-coordinate.
      * @param {SpriteSheet} sparkle - Sheet played at the impact point.
+     * @param {number} damage - Damage dealt once to every enemy the bolt touches.
      */
-    constructor(x1, y1, x2, y2, sparkle) {
+    constructor(x1, y1, x2, y2, sparkle, damage = 0) {
+        this.damage = damage;
+        this.struck = false;
+        this.defeatedEnemies = [];
         this.x1 = x1;
         this.y1 = y1;
         this.x2 = x2;
@@ -386,16 +390,41 @@ export class LightningStrike {
     }
 
     /**
-     * Ages the bolt and re-rolls its path every three frames.
+     * Ages the bolt and re-rolls its path every three frames. On its first
+     * update the bolt damages every enemy along it, once.
      * @param {number} frameScale - Elapsed time in 60 FPS frames.
      */
-    update(frameScale) {
+    update(frameScale, w, h, walls = null, enemies = []) {
+        if (!this.struck) {
+            this.struck = true;
+            if (this.damage > 0) this.strike(enemies);
+        }
         this.age += frameScale;
         if (this.age >= LightningStrike.DURATION) this.done = true;
 
         if (Math.floor(this.age / 3) !== this.pathTick) {
             this.pathTick = Math.floor(this.age / 3);
             this.points = this.makePath();
+        }
+    }
+
+    /**
+     * Damages each living enemy whose square the bolt's straight line passes through.
+     * @param {Enemy[]} enemies - Enemies to check.
+     */
+    strike(enemies) {
+        const steps = Math.max(1, Math.ceil(Math.hypot(this.x2 - this.x1, this.y2 - this.y1) / 3));
+        for (const enemy of enemies) {
+            if (!enemy.isAlive()) continue;
+            for (let i = 0; i <= steps; i++) {
+                const x = this.x1 + (this.x2 - this.x1) * i / steps;
+                const y = this.y1 + (this.y2 - this.y1) * i / steps;
+                if (x >= enemy.x && x <= enemy.x + enemy.size && y >= enemy.y && y <= enemy.y + enemy.size) {
+                    enemy.takeDamage(this.damage);
+                    if (!enemy.isAlive()) this.defeatedEnemies.push(enemy);
+                    break;
+                }
+            }
         }
     }
 

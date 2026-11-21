@@ -10,6 +10,16 @@ const HEAL_AMOUNT = 30;
 const LIGHTNING_RANGE = 140;
 
 /**
+ * Damage a spell deals: its base damage plus the caster's gear bonus (the Arcane Staff).
+ * @param {number} base - The spell's own damage.
+ * @param {Entity} caster - Entity casting the spell.
+ * @returns {number} Total damage.
+ */
+export function spellDamage(base, caster) {
+    return base + ((caster && caster.spellPower) || 0);
+}
+
+/**
  * Spell definitions keyed by inventory item id.
  * cooldown is in 60 FPS frames; manaCost is taken from the caster's stats, if it
  * has any; create() returns the new effect.
@@ -19,8 +29,8 @@ export const SPELLS = {
     fire_bolt: {
         cooldown: 30,
         manaCost: 8,
-        create: (art, x, y, dir) => new Projectile(x, y, dir, {
-            sheet: art.fireball, speed: 7, range: 520, damage: 1,
+        create: (art, x, y, dir, caster) => new Projectile(x, y, dir, {
+            sheet: art.fireball, speed: 7, range: 520, damage: spellDamage(1, caster),
             lightRadius: 85, lightColor: [1.0, 0.55, 0.2], sparkColor: [255, 170, 70],
             wobble: { amplitude: 3, wavelength: 220 }
         })
@@ -28,8 +38,8 @@ export const SPELLS = {
     ice_shard: {
         cooldown: 30,
         manaCost: 8,
-        create: (art, x, y, dir) => new Projectile(x, y, dir, {
-            sheet: art.iceball, speed: 8, range: 460,
+        create: (art, x, y, dir, caster) => new Projectile(x, y, dir, {
+            sheet: art.iceball, speed: 8, range: 460, damage: spellDamage(1, caster),
             lightRadius: 80, lightColor: [0.45, 0.75, 1.0], sparkColor: [140, 200, 255],
             wobble: { amplitude: 2, wavelength: 240 }
         })
@@ -40,7 +50,8 @@ export const SPELLS = {
         create: (art, x, y, dir, caster, walls) => {
             // The bolt ends at the first wall in its path.
             const reach = walls ? walls.castRay(x, y, dir, LIGHTNING_RANGE) : LIGHTNING_RANGE;
-            return new LightningStrike(x, y, x + dir[0] * reach, y + dir[1] * reach, art.sparkle);
+            return new LightningStrike(x, y, x + dir[0] * reach, y + dir[1] * reach,
+                art.sparkle, spellDamage(2, caster));
         }
     },
     heal_spell: {
@@ -149,6 +160,11 @@ export class SpellCaster {
             if (onDefeat && effect.defeatedEnemy) {
                 onDefeat(effect.defeatedEnemy);
                 effect.defeatedEnemy = null; // Never drop XP twice for one kill.
+            }
+            // Lightning and bombs can defeat several enemies at once.
+            if (onDefeat && effect.defeatedEnemies && effect.defeatedEnemies.length) {
+                for (const enemy of effect.defeatedEnemies) onDefeat(enemy);
+                effect.defeatedEnemies = [];
             }
         }
         this.effects = this.effects.filter(effect => !effect.done);

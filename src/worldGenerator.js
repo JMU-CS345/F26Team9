@@ -54,8 +54,13 @@ const DEFAULTS = {
     maxRoomHeight: 7,
     corridorWidth: 2,
     // Empty tiles kept between rooms so each room gets its own walls.
-    roomGap: 2
+    roomGap: 2,
+    // Small locked side rooms (see carveVault). The game asks for one per level.
+    vaults: 0
 };
+
+// Floor inside a vault: stone slabs, so it reads as a treasure room.
+const VAULT_MATERIAL = FLOOR.SLAB;
 
 /**
  * Creates a seeded random number generator (mulberry32).
@@ -88,6 +93,8 @@ export class World {
         this.rooms = [];
         this.torches = [];
         this.start = null;
+        // Locked side rooms: {x, y, w, h, roomIndex, side, door: [[col, row], ...]}.
+        this.vaults = [];
     }
 
     /** @returns {boolean} True if the tile has floor of its own. */
@@ -201,6 +208,7 @@ export function generateWorld(cols, rows, random = Math.random, options = {}) {
         carveCorridor(world, roomCenter(world.rooms[i - 1]), roomCenter(world.rooms[i]),
             settings.corridorWidth, random, randomInt);
     }
+    for (let i = 0; i < settings.vaults; i++) carveVault(world, random, randomInt);
     buildWalls(world);
     placeTorches(world);
 
@@ -263,6 +271,79 @@ function carveCorridor(world, from, to, width, random, randomInt) {
             }
         }
     }
+}
+
+/**
+ * Carves a small locked side room ("vault") next to a random room other than the
+ * first. It sits one wall row away from the room, joined to it by a two-tile
+ * doorway; the game puts a gate in the doorway. Every vault tile keeps two tiles
+ * of empty space from all other floor, so its only way in is the doorway.
+ * Does nothing if no room has space for one.
+ * @returns {Object|null} The vault, also added to world.vaults.
+ */
+function carveVault(world, random, randomInt) {
+    const options = [];
+    for (let index = 1; index < world.rooms.length; index++) {
+        const room = world.rooms[index];
+        // North and south vaults are 4 wide by 3 tall; east and west ones 3 by 4.
+        for (let x0 = room.x; x0 <= room.x + room.w - 4; x0++) {
+            options.push({ index, side: "north", x: x0, y: room.y - 4, w: 4, h: 3,
+                door: [[x0 + 1, room.y - 1], [x0 + 2, room.y - 1]] });
+            options.push({ index, side: "south", x: x0, y: room.y + room.h + 1, w: 4, h: 3,
+                door: [[x0 + 1, room.y + room.h], [x0 + 2, room.y + room.h]] });
+        }
+        for (let y0 = room.y; y0 <= room.y + room.h - 4; y0++) {
+            options.push({ index, side: "west", x: room.x - 4, y: y0, w: 3, h: 4,
+                door: [[room.x - 1, y0 + 1], [room.x - 1, y0 + 2]] });
+            options.push({ index, side: "east", x: room.x + room.w + 1, y: y0, w: 3, h: 4,
+                door: [[room.x + room.w, y0 + 1], [room.x + room.w, y0 + 2]] });
+        }
+    }
+
+    // Try the options in a random order and keep the first that fits.
+    for (let i = options.length - 1; i > 0; i--) {
+        const j = randomInt(0, i);
+        [options[i], options[j]] = [options[j], options[i]];
+    }
+    const vault = options.find(option => vaultFits(world, option));
+    if (!vault) return null;
+
+    for (let row = vault.y; row < vault.y + vault.h; row++) {
+        for (let col = vault.x; col < vault.x + vault.w; col++) {
+            world.floor.set(col, row, VAULT_MATERIAL * FLOOR_VARIANTS + randomInt(0, FLOOR_VARIANTS - 1));
+        }
+    }
+    for (const [col, row] of vault.door) {
+        world.floor.set(col, row, VAULT_MATERIAL * FLOOR_VARIANTS + randomInt(0, FLOOR_VARIANTS - 1));
+    }
+    const result = { x: vault.x, y: vault.y, w: vault.w, h: vault.h, roomIndex: vault.index,
+        side: vault.side, door: vault.door };
+    world.vaults.push(result);
+    return result;
+}
+
+/**
+ * Checks that a vault stays off the map's border and away from other floor:
+ * nothing within two tiles of it may be floor except its own room, and the
+ * wall row between it and the room must be solid.
+ */
+function vaultFits(world, vault) {
+    if (vault.x < 2 || vault.y < 2 || vault.x + vault.w > world.cols - 2
+            || vault.y + vault.h > world.rows - 2) return false;
+    const room = world.rooms[vault.index];
+    const inRoom = (col, row) => col >= room.x && col < room.x + room.w
+        && row >= room.y && row < room.y + room.h;
+    for (let row = vault.y - 2; row < vault.y + vault.h + 2; row++) {
+        for (let col = vault.x - 2; col < vault.x + vault.w + 2; col++) {
+            if (!world.isFloor(col, row)) continue;
+            // The room itself may be two tiles away, but never one (that is the wall row).
+            const ring = Math.max(vault.x - col, col - (vault.x + vault.w - 1),
+                vault.y - row, row - (vault.y + vault.h - 1));
+            if (ring === 2 && inRoom(col, row)) continue;
+            return false;
+        }
+    }
+    return true;
 }
 
 /**

@@ -1,3 +1,21 @@
+/** @returns {string} A short note on what an item does, for the inventory screen. */
+export function describeItem(item) {
+    const notes = {
+        healing_potion: "restores 40 HP",
+        mana_potion: "restores 30 MP",
+        speed_potion: "move faster for 10s",
+        shield_potion: "block all damage for 8s",
+        fire_bolt: "spell, 1 damage",
+        ice_shard: "spell, 1 damage",
+        lightning: "spell, 2 damage to all in line",
+        heal_spell: "spell, heals 30 HP",
+        fire_bomb: "damages every enemy nearby",
+        arcane_staff: "passive: +1 spell damage",
+        swift_boots: "passive: +20% move speed"
+    };
+    return notes[item.id] || item.type;
+}
+
 /**
  * E-key inventory screen: four hotkeys across the top and four inventory slots
  * per page below. WASD navigates; Space picks, cancels or assigns an item.
@@ -150,7 +168,13 @@ export class InventoryMenu {
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(Math.min(this.menu.getTextSize() + 7, 30));
-        text("Spell & Potion Inventory", width / 2, height / 2 - 213);
+        text("Inventory", width / 2, height / 2 - 213);
+        textSize(14);
+        fill(235, 190, 60);
+        textAlign(RIGHT, CENTER);
+        text("Gold: " + this.inventory.gold, width / 2 + 262, height / 2 - 213);
+        textAlign(CENTER, CENTER);
+        fill(255);
 
         const startX = width / 2 - 215;
         const gap = 18;
@@ -195,7 +219,7 @@ export class InventoryMenu {
         fill(255);
         textSize(15);
         text(selected ? "Selected: " + selected.shortName + " (W then A/D, Space to assign)"
-                      : focused ? focused.name : "Choose an item below",
+                      : focused ? focused.name + " - " + describeItem(focused) : "Choose an item below",
              width / 2, inventoryY + 135);
         fill(220);
         textSize(13);
