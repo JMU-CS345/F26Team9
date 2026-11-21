@@ -15,6 +15,25 @@ export class WallCollider {
         this.world = world;
         this.tileSize = tileSize;
         this.unit = tileSize / WALL_SOURCE_TILE;
+
+        // Vault gates: each is {tiles: [[col, row], ...], closed: boolean}. A closed
+        // gate's tiles are fully solid, so the player, enemies, and every spell or
+        // projectile that checks walls is stopped by it.
+        this.gates = [];
+    }
+
+    /**
+     * Adds a gate whose tiles are solid while gate.closed is true.
+     * @param {Object} gate - Object with tiles [[col, row], ...] and a closed flag.
+     */
+    addGate(gate) {
+        this.gates.push(gate);
+    }
+
+    /** @returns {boolean} True if a closed gate covers the tile. */
+    gateBlocks(col, row) {
+        return this.gates.some(gate => gate.closed
+            && gate.tiles.some(([c, r]) => c === col && r === row));
     }
 
     /**
@@ -27,6 +46,9 @@ export class WallCollider {
         const left = col * this.tileSize;
         const top = row * this.tileSize;
         const unit = this.unit;
+        if (this.gateBlocks(col, row)) {
+            return [{ x: left, y: top, w: this.tileSize, h: this.tileSize }];
+        }
         return this.world.wallPieces(col, row).flatMap(piece => piece.rects.map(rect => ({
             x: left + rect.x * unit,
             y: top + rect.y * unit,

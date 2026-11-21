@@ -124,15 +124,66 @@ export class Player extends Entity {
 
         // Health, mana, and experience, shown by the stat bars.
         this.stats = new PlayerStats();
+
+        // Potion effects, counted down in 60 FPS frames.
+        this.speedBoostFrames = 0;
+        this.shieldFrames = 0;
+
+        // Passive gear bonuses, kept in sync with the inventory by the game.
+        this.spellPower = 0;      // Extra damage for every damaging spell.
+        this.gearSpeedBonus = 0;  // Fraction added to movement speed, e.g. 0.2.
     }
+
+    // How much a speed potion multiplies movement speed.
+    static SPEED_BOOST = 1.6;
 
     /**
      * Hurts the player. Enemies, traps, and anything else that deals damage
      * should call this so the health bar and hit flash update.
+     * A shield potion blocks all damage while it lasts.
      * @param {number} amount - Damage dealt.
      */
     takeDamage(amount) {
+        if (this.shieldFrames > 0) return;
         this.stats.takeDamage(amount);
+    }
+
+    /** @returns {number} Multiplier applied to the base speed by potions and gear. */
+    speedMultiplier() {
+        return (this.speedBoostFrames > 0 ? Player.SPEED_BOOST : 1) * (1 + this.gearSpeedBonus);
+    }
+
+    /**
+     * Counts potion effects down.
+     * @param {number} frameScale - Elapsed time in 60 FPS frames.
+     */
+    updateBuffs(frameScale) {
+        this.speedBoostFrames = Math.max(0, this.speedBoostFrames - frameScale);
+        this.shieldFrames = Math.max(0, this.shieldFrames - frameScale);
+    }
+
+    /** Draws the player, plus a bubble while shielded and a trail while hasted. */
+    display() {
+        super.display();
+        if (typeof push !== "function") return;
+        const cx = this.x + this.size / 2;
+        const cy = this.y + this.size / 2;
+        push();
+        if (this.shieldFrames > 0) {
+            // Flicker during the last second as a warning that it is about to end.
+            const fading = this.shieldFrames < 60 && Math.floor(this.shieldFrames / 6) % 2 === 0;
+            noFill();
+            stroke(120, 220, 255, fading ? 70 : 160);
+            strokeWeight(1.5);
+            ellipse(cx, cy + 2, this.size * 0.9, this.size * 0.95);
+        }
+        if (this.speedBoostFrames > 0 && this.isMoving) {
+            noStroke();
+            fill(255, 200, 80, 120);
+            rect(cx - this.vx * 4 - 1, cy + 10 - this.vy * 4, 2, 2);
+            rect(cx - this.vx * 7 + 3, cy + 6 - this.vy * 7, 2, 2);
+        }
+        pop();
     }
 
     /**
@@ -156,7 +207,11 @@ export class Player extends Entity {
         // Convert to 60 FPS frames for consistent movement on different PCs.
         const frameScale = (typeof deltaTime === "number" && deltaTime > 0)
             ? Math.min(deltaTime / (1000 / 60), 3) : 1;
+        // Boosts apply only while moving, so the developer menu still edits the base speed.
+        const baseSpeed = this.speed;
+        this.speed = baseSpeed * this.speedMultiplier();
         this.moveSmooth(dx, dy, canvasWidth, canvasHeight, frameScale, walls);
+        this.speed = baseSpeed;
     }
 }
 

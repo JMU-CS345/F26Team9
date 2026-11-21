@@ -14,6 +14,9 @@ import { WorldRenderer } from "./worldRenderer.js";
 import { Camera } from "./camera.js";
 import { Torch } from "./torch.js";
 import { WallCollider } from "./wallCollider.js";
+import { MIN_CHESTS, MAX_CHESTS, spawnChests } from "./chest.js";
+import { createVaults } from "./vault.js";
+import { applyGear, useItem } from "./itemEffects.js";
 
 // Objects used throughout the game.
 let player;
@@ -38,6 +41,9 @@ let world;
 let worldRenderer;
 let camera;
 let torches = [];
+let chests = [];
+let vaults = [];
+let interactPrompt = null;
 let walls;
 let statBars;
 let hotkeyMessage = "";
@@ -142,10 +148,21 @@ function setup() {
  */
 function createWorld() {
     // A new seed every time, so each run gets a different layout.
-    world = generateWorld(WORLD_COLS, WORLD_ROWS, createRandom(Date.now()), { maxRooms: 14 });
+    const random = createRandom(Date.now());
+    // 2-3 chests per level. One is locked in a vault; with three, two are.
+    const chestCount = MIN_CHESTS + Math.floor(random() * (MAX_CHESTS - MIN_CHESTS + 1));
+    world = generateWorld(WORLD_COLS, WORLD_ROWS, random,
+        { maxRooms: 14, vaults: chestCount >= 3 ? 2 : 1 });
     worldRenderer.build(world, 0, 0);
     walls = new WallCollider(world, TILE_SIZE);
+    if (spellCaster) spellCaster.walls = walls;
     enemies = spawnEnemies(world, TILE_SIZE, enemySprites);
+
+    // Vault gates join the walls; plates, keys, and levers claim their tiles first.
+    const usedTiles = new Set();
+    vaults = createVaults(world, TILE_SIZE, walls, random, usedTiles);
+    chests = [...vaults.map(vault => vault.chest),
+        ...spawnChests(world, TILE_SIZE, random, Math.max(0, chestCount - vaults.length), usedTiles)];
     enemyProjectiles = [];
     enemyBombs = [];
     xpDrops = [];
@@ -175,6 +192,90 @@ function worldHeight() {
     return world.rows * TILE_SIZE;
 }
 
+/**
+ * Shows a short message above the hotbar.
+ * @param {string} message - Text to show.
+ * @param {number} frames - How long, in frames.
+ */
+function showMessage(message, frames = 120) {
+    hotkeyMessage = message;
+    hotkeyMessageFrames = frames;
+}
+
+/** Adds an XP drop where an enemy was defeated. */
+function dropXp(dead) {
+    xpDrops.push(new XpDrop(dead.x + dead.size / 2, dead.y + dead.size / 2));
+}
+
+/** @returns {Chest|null} The closest unopened chest within reach of the player. */
+function nearbyChest() {
+    return chests.find(chest => !chest.opened && chest.isNear(player)) || null;
+}
+
+/**
+ * Space: opens a nearby chest, or uses a vault gate or lever.
+ * @returns {boolean} True if something was used.
+ */
+function interact() {
+    const chest = nearbyChest();
+    if (chest) {
+        const reward = chest.open(inventory);
+        const hint = reward.item && reward.item.type !== "gold" ? "  (E to assign a hotkey)" : "";
+        showMessage("Chest: " + reward.name + "!" + hint, 180);
+        return true;
+    }
+    for (const vault of vaults) {
+        const message = vault.interact(player);
+        if (message) {
+            showMessage(message, 180);
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Picks the "Space: ..." hint shown near chests, gates, and levers. */
+function updateInteractPrompt() {
+    interactPrompt = nearbyChest() ? "SPACE: Open chest" : null;
+    for (const vault of vaults) {
+        if (interactPrompt) break;
+        interactPrompt = vault.prompt(player);
+    }
+}
+
+/** Gold, keys held, and any running lever timer, under the stat bars. */
+function drawTreasureStatus() {
+    push();
+    noStroke();
+    textAlign(LEFT, TOP);
+    textSize(13);
+    fill(235, 190, 60);
+    rect(20, 162, 10, 10, 2);
+    fill(255, 244, 161);
+    rect(23, 165, 4, 4);
+    fill(235);
+    let line = "Gold: " + inventory.gold;
+    const keys = vaults.filter(vault => vault.hasKey).length;
+    if (keys) line += "    Vault key x" + keys;
+    const opened = chests.filter(chest => chest.opened).length;
+    line += "    Chests: " + opened + " / " + chests.length;
+    text(line, 38, 160);
+    for (const vault of vaults) {
+        if (vault.lockType === "lever" && vault.timer > 0 && !vault.solved) {
+            fill(255, 170, 90);
+            text("Vault gate closes in " + Math.ceil(vault.timer / 60) + "s!", 20, 180);
+        }
+    }
+    if (player.shieldFrames > 0 || player.speedBoostFrames > 0) {
+        const effects = [];
+        if (player.shieldFrames > 0) effects.push("Shield " + Math.ceil(player.shieldFrames / 60) + "s");
+        if (player.speedBoostFrames > 0) effects.push("Speed " + Math.ceil(player.speedBoostFrames / 60) + "s");
+        fill(150, 220, 255);
+        text(effects.join("    "), 20, 198);
+    }
+    pop();
+}
+
 /** Draws the four assigned hotkeys during gameplay. */
 function drawHotbar() {
     push();
@@ -201,6 +302,12 @@ function drawHotbar() {
             fill(255);
             textSize(10);
             text(item.symbol, x + 35, y + 29);
+            // Potions and bombs run out, so show how many are left.
+            if (item.type === "potion" || item.type === "tool") {
+                textAlign(RIGHT, CENTER);
+                text("x" + inventory.getQuantity(item.id), x + slotWidth - 5, y + 29);
+                textAlign(CENTER, CENTER);
+            }
             textSize(10);
             text(item.shortName, x + slotWidth / 2, y + 47);
         } else {
@@ -343,6 +450,8 @@ function updateHeldSlider() {
 function draw() {
     const paused = selectedClass === null || menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
     if (!paused) {
+        // Gear bonuses follow the inventory (chests and the developer menu change it).
+        applyGear(player, inventory);
         // Movement and spells are limited to the world, not the screen.
         player.handleInput(worldWidth(), worldHeight(), walls);
 
@@ -362,11 +471,16 @@ function draw() {
         enemyProjectiles = enemyProjectiles.filter(shot => !shot.done);
         for (const bomb of enemyBombs) bomb.update(frameScale, player, walls, world, TILE_SIZE);
         enemyBombs = enemyBombs.filter(bomb => !bomb.done);
-        spellCaster.update(frameScale, worldWidth(), worldHeight(), enemies, dead => {
-            xpDrops.push(new XpDrop(dead.x + dead.size / 2, dead.y + dead.size / 2));
-        });
+        spellCaster.update(frameScale, worldWidth(), worldHeight(), enemies, dropXp);
         for (const drop of xpDrops) drop.collect(player);
         xpDrops = xpDrops.filter(drop => !drop.collected);
+        for (const chest of chests) chest.update(frameScale);
+        for (const vault of vaults) {
+            const message = vault.update(player, frameScale);
+            if (message) showMessage(message, 180);
+        }
+        updateInteractPrompt();
+        player.updateBuffs(frameScale);
         lightOrb.update(player, frameScale);
         for (const torch of torches) torch.update(frameScale);
         player.stats.update(frameScale);
@@ -384,6 +498,8 @@ function draw() {
     push();
     camera.apply();
     worldRenderer.display();
+    for (const vault of vaults) vault.display();
+    for (const chest of chests) chest.display();
     for (const enemy of enemies) if (enemy.isAlive()) enemy.display(enemyItemSprites);
     for (const shot of enemyProjectiles) shot.display(enemyItemSprites);
     for (const bomb of enemyBombs) bomb.display(enemyItemSprites);
@@ -397,6 +513,8 @@ function draw() {
     camera.apply();
     for (const torch of torches) torch.display();
     for (const drop of xpDrops) drop.display();
+    for (const vault of vaults) vault.displayOverlay();
+    for (const chest of chests) if (!chest.rich) chest.displayOverlay();
     spellCaster.display();
     lightOrb.display();
     pop();
@@ -411,13 +529,14 @@ function draw() {
     textSize(menu.getTextSize());
     text("MageQuest", 20, 20);
     textSize(13);
-    text("Q: Settings    P: Dev    E: Inventory", 20, 55);
+    text("Q: Settings    P: Dev    E: Inventory    SPACE: Open / Use", 20, 55);
     if (selectedClass === null) drawClassSelectionPopup();
     drawWizardStats();
     pop();
 
     statBars.display(20, 80);
     statBars.displayHurtFlash();
+    drawTreasureStatus();
 
     drawHotbar();
     if (hotkeyMessageFrames > 0) {
@@ -429,6 +548,19 @@ function draw() {
         text(hotkeyMessage, width / 2, height - 88);
         pop();
         hotkeyMessageFrames--;
+    }
+    const menuOpen = menu.isOpen || developerMenu.isOpen || inventoryMenu.isOpen;
+    if (interactPrompt && !menuOpen && selectedClass !== null) {
+        push();
+        textAlign(CENTER, CENTER);
+        textSize(14);
+        const w = textWidth(interactPrompt) + 20;
+        noStroke();
+        fill(20, 18, 26, 200);
+        rect(width / 2 - w / 2, height - 128, w, 24, 5);
+        fill(255, 230, 150);
+        text(interactPrompt, width / 2, height - 116);
+        pop();
     }
 
 
@@ -483,9 +615,8 @@ function toggleGameMenu(which) {
 }
 
 /**
- * Handles global menu keys and assigns H/J/K/L during gameplay.
- * No spell effects are implemented yet; key activation is acknowledged in
- * the HUD so future gameplay effects can be added without changing menus.
+ * Handles global menu keys, Space to open chests and use vault locks, and H/J/K/L
+ * to cast spells or use potions, bombs, and gear during gameplay.
  * @param {KeyboardEvent} event - p5 keyboard event.
  */
 function keyPressed(event) {
@@ -513,6 +644,12 @@ function keyPressed(event) {
         return false;
     }
 
+    // Space opens chests and works vault gates and levers.
+    if (pressedKey === " " || (event && event.code === "Space")) {
+        if (selectedClass !== null && (!event || !event.repeat)) interact();
+        return false;
+    }
+
     if (inventory.keys.includes(pressedKey)) {
         if (!event || !event.repeat) {
             const item = inventory.getAssigned(pressedKey);
@@ -525,10 +662,14 @@ function keyPressed(event) {
                 }
                 return false;
             }
-            hotkeyMessage = item
-                ? pressedKey.toUpperCase() + ": " + item.name + " (effect coming later)"
-                : pressedKey.toUpperCase() + ": No item assigned (press E)";
-            hotkeyMessageFrames = 100;
+            if (!item) {
+                showMessage(pressedKey.toUpperCase() + ": No item assigned (press E)", 100);
+                return false;
+            }
+            const result = useItem(item.id, {
+                player, inventory, enemies, effects: spellCaster.effects, onDefeat: dropXp
+            });
+            showMessage(result.message, 100);
         }
         return false;
     }

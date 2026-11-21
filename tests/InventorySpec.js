@@ -15,16 +15,22 @@ describe("Inventory item counts and hotkeys", function () {
 
     it("provides a small set of test items on first play", function () {
         const inv = new Inventory(storage());
-        expect(inv.getQuantity("healing_potion")).toBe(2);
+        expect(inv.getQuantity("mana_potion")).toBe(2);
         expect(inv.getQuantity("fire_bolt")).toBe(1);
         expect(inv.getQuantity("speed_potion")).toBe(0);
-        expect(inv.ownedItems().length).toBe(4);
+        expect(inv.ownedItems().length).toBe(3);
+    });
+
+    it("does not start with healing potions or gold", function () {
+        const inv = new Inventory(storage());
+        expect(inv.getQuantity("healing_potion")).toBe(0);
+        expect(inv.gold).toBe(0);
     });
 
     it("assigns an owned potion to H", function () {
         const inv = new Inventory(storage());
-        expect(inv.assign("healing_potion", "h")).toBe(true);
-        expect(inv.getAssigned("h").id).toBe("healing_potion");
+        expect(inv.assign("mana_potion", "h")).toBe(true);
+        expect(inv.getAssigned("h").id).toBe("mana_potion");
     });
 
     it("assigns a spell to a different hotkey", function () {
@@ -74,7 +80,7 @@ describe("Inventory item counts and hotkeys", function () {
         inv.assign("fire_bolt", "l");
         inv.setQuantity("fire_bolt", 0);
         expect(inv.getAssigned("l")).toBe(null);
-        expect(inv.ownedItems().length).toBe(3);
+        expect(inv.ownedItems().length).toBe(2);
     });
 
     it("clamps developer item quantities to 0–9", function () {
@@ -112,7 +118,7 @@ describe("Inventory item counts and hotkeys", function () {
 
     it("ignores malformed and duplicate bindings loaded from storage", function () {
         const disk = storage();
-        disk.setItem("mageQuestInventory", JSON.stringify({
+        disk.setItem("mageQuestInventory_v2", JSON.stringify({
             quantities: {fire_bolt: 1, mana_potion: 5},
             bindings: {h: "fire_bolt", j: "fire_bolt", k: "nonexistent", l: "mana_potion"}
         }));
@@ -130,6 +136,7 @@ describe("E menu WASD and Space assignment flow", function () {
         const storage = { getItem: key => data[key] || null,
                           setItem: (key, value) => { data[key] = value; } };
         const inventory = new Inventory(storage);
+        inventory.setQuantity("healing_potion", 2);
         const menu = new InventoryMenu(inventory, { getTextSize: () => 18 });
         menu.toggle();
         return { inventory, menu, storage };
@@ -227,6 +234,7 @@ describe("Developer menu inventory testing controls", function () {
         const data = {};
         const storage = { getItem: k => data[k] || null, setItem: (k,v) => { data[k] = v; } };
         const inventory = new Inventory(storage);
+        inventory.setQuantity("healing_potion", 2);
         const player = new Player(100,100);
         const menu = new DeveloperMenu(player, { getTextSize: () => 18 }, storage, inventory);
         menu.toggle();

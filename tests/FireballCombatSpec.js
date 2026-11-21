@@ -62,11 +62,31 @@ describe("Fireball enemy combat", function () {
         expect(shot.exploding).toBe(true);
         expect(target.health).toBe(3);
     });
-    it("doesn't deal damage for blue ice spells yet", function () {
+    it("deals one damage with the ice shard", function () {
         const target = new Enemy(90, 25);
         const spells = new SpellCaster({ fireball: {}, iceball: {}, sparkle: {} });
         spells.cast("ice_shard", { x: 10, y: 30, size: 20, direction: "east" });
         for (let i = 0; i < 25; i++) spells.update(1, 600, 400, [target]);
-        expect(target.health).toBe(3);
+        expect(target.health).toBe(2);
+    });
+    it("adds the caster's spell power (Arcane Staff) to spell damage", function () {
+        const target = new Enemy(90, 25);
+        const spells = new SpellCaster({ fireball: {}, iceball: {}, sparkle: {} });
+        spells.cast("fire_bolt", { x: 10, y: 30, size: 20, direction: "east", spellPower: 1 });
+        for (let i = 0; i < 25; i++) spells.update(1, 600, 400, [target]);
+        expect(target.health).toBe(1);
+    });
+    it("lightning damages every enemy along the bolt once and reports kills", function () {
+        const near = new Enemy(45, 25, {}, { health: 2 });
+        const far = new Enemy(110, 25, {}, { health: 5 });
+        const behind = new Enemy(10, 200, {}, { health: 2 });
+        const spells = new SpellCaster({ fireball: {}, iceball: {}, sparkle: {} });
+        const defeated = [];
+        spells.cast("lightning", { x: 10, y: 30, size: 20, direction: "east" });
+        for (let i = 0; i < 30; i++) spells.update(1, 600, 400, [near, far, behind], e => defeated.push(e));
+        expect(near.isAlive()).toBe(false);
+        expect(far.health).toBe(3);
+        expect(behind.health).toBe(2);
+        expect(defeated).toEqual([near]);
     });
 });

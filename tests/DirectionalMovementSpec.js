@@ -671,6 +671,32 @@ describe("Player stats", function () {
             expect(stats.level).toBe(3);
             expect(stats.experience).toBe(10);
         });
+
+        it("takes its starting stats from the chosen wizard class", function () {
+            const stats = new PlayerStats();
+            stats.applyClass("Earth");
+            expect(stats.wizardClass).toBe("Earth");
+            expect(stats.maxHealth).toBe(150);
+            expect(stats.health).toBe(150);
+            expect(stats.maxMana).toBe(30);
+            expect(stats.mana).toBe(30);
+            expect(stats.attack).toBe(50);
+            expect(stats.defense).toBe(20);
+        });
+
+        it("keeps the bars in step with the class stats", function () {
+            const stats = new PlayerStats();
+            stats.applyClass("Mind");
+            const bars = new StatBars(stats);
+            stats.takeDamage(35);
+            expect(bars.fraction("health")).toBe(0.5);
+            expect(bars.valueText("health")).toBe("35 / 70");
+            expect(bars.valueText("mana")).toBe("50 / 50");
+        });
+
+        it("rejects an unknown class", function () {
+            expect(() => new PlayerStats().applyClass("Water")).toThrow();
+        });
     });
 
     describe("StatBars", function () {
