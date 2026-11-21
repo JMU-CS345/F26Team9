@@ -24,7 +24,7 @@ At the review we will demo this in the deployed build: take damage from an enemy
 
 ## 3. Capacity and Velocity
 
-**Sprint dates:** 11/19 to 12/2. We are working remotely the week of Thanksgiving (11/23 to 11/27), and will still have a few days working in-person.
+**Sprint dates:** 11/19 to 12/4. We are working remotely the week of Thanksgiving (11/23 to 11/27), and will still have a few days working in-person.
 
 **Velocity last sprint:** 12
 
@@ -38,7 +38,7 @@ At the review we will demo this in the deployed build: take damage from an enemy
 We are committing 19 points, which is more than our average velocity (13.5) and last sprint's velocity (12). We chose to take this on for three reasons:
 - Two stories build on work that's already done. #26 finishes enemy damage, which was mostly built in Sprint 2. #5 connects the stats object from #61 to the UI.
 - The stakeholder asked us to prioritize combat. The miniboss (#18) and XP and leveling (#12) make fighting enemies worth it.
-- The sprint runs two calendar weeks (11/19 to 12/2), with Thanksgiving week off in the middle, so members can work extra on either side of the break.
+- The sprint runs two calendar weeks (11/19 to 12/4), with Thanksgiving week off in the middle, so members can work extra on either side of the break.
 
 The tasks add up to about 35 hours, or roughly 9 hours per person. That's about 2 hours more each than in Sprint 2. If we fall behind, we drop #16 first, then #12. Without both, the plan is 12 points, the same as last sprint's velocity.
 
